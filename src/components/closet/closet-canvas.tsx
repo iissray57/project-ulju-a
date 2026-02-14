@@ -6,10 +6,19 @@ import { Grid, OrbitControls, OrthographicCamera, PerspectiveCamera } from '@rea
 import { useTheme } from 'next-themes';
 import { useEditorState, useEditorDispatch } from './editor-context';
 import { ClosetComponentMesh } from './closet-component-mesh';
+import { DimensionLabel } from './dimension-label';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 function Scene() {
-  const { components, cameraMode, gridSize, cameraResetCounter } = useEditorState();
+  const {
+    components,
+    cameraMode,
+    gridSize,
+    cameraResetCounter,
+    isDragging,
+    showDimensions,
+    selectedId,
+  } = useEditorState();
   const dispatch = useEditorDispatch();
   const { resolvedTheme } = useTheme();
   const controlsRef = useRef<OrbitControlsImpl>(null);
@@ -19,6 +28,13 @@ function Scene() {
   // Grid cell size in scene units (gridSize mm -> scene units at 1:100)
   const cellSize = gridSize / 100;
   const sectionSize = cellSize * 10;
+
+  // Disable OrbitControls while a component is being dragged
+  useEffect(() => {
+    if (controlsRef.current) {
+      controlsRef.current.enabled = !isDragging;
+    }
+  }, [isDragging]);
 
   // Camera reset: reset controls target and camera position
   useEffect(() => {
@@ -31,6 +47,11 @@ function Scene() {
   const handlePointerMissed = useCallback(() => {
     dispatch({ type: 'SELECT_COMPONENT', payload: null });
   }, [dispatch]);
+
+  // Find the selected component for dimension labels
+  const selectedComponent = selectedId
+    ? components.find((c) => c.id === selectedId)
+    : null;
 
   return (
     <>
@@ -96,6 +117,11 @@ function Scene() {
           <ClosetComponentMesh key={comp.id} component={comp} />
         ))}
       </group>
+
+      {/* Dimension labels for the selected component */}
+      {showDimensions && selectedComponent && (
+        <DimensionLabel component={selectedComponent} />
+      )}
     </>
   );
 }
@@ -107,7 +133,7 @@ export function ClosetCanvas() {
   return (
     <div className="h-full w-full">
       <Canvas
-        gl={{ antialias: true, alpha: false }}
+        gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true }}
         style={{ background: isDark ? '#1a1a1a' : '#f5f5f5' }}
       >
         <Scene />

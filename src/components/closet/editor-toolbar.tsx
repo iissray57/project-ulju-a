@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useEditorState, useEditorDispatch } from './editor-context';
+import { ExportImageButton } from './export-image-button';
 
 const GRID_SIZES = [
   { value: 25, label: '25mm' },
@@ -129,6 +130,11 @@ export function EditorToolbar({ onOpenMobilePalette }: EditorToolbarProps) {
           </Button>
         ))}
       </div>
+
+      <Separator orientation="vertical" className="mx-1 h-6" />
+
+      {/* Export image */}
+      <ExportImageButton />
 
       {/* Spacer */}
       <div className="flex-1" />

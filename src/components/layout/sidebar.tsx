@@ -23,7 +23,7 @@ const navItems = [
   { href: '/orders', label: '수주관리', icon: ClipboardList },
   { href: '/schedule', label: '스케줄', icon: Calendar },
   { href: '/inventory', label: '재고관리', icon: Package },
-  { href: '/purchase-orders', label: '발주관리', icon: ShoppingCart },
+  { href: '/purchases', label: '발주관리', icon: ShoppingCart },
   { href: '/finance', label: '매출/매입', icon: DollarSign },
   { href: '/reports', label: '리포트', icon: FileText },
 ];

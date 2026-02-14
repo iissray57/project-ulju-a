@@ -7,6 +7,8 @@ import { OrderStatusBar } from '@/components/orders/order-status-bar';
 import { OrderDetailSections } from '@/components/orders/order-detail-sections';
 import { OrderSchedules } from '@/components/orders/order-schedules';
 import { OrderMaterialsTable } from '@/components/orders/order-materials-table';
+import { OrderChecklist } from '@/components/orders/order-checklist';
+import { getOrderChecklist } from '../checklist-actions';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -21,6 +23,9 @@ export default async function OrderDetailPage({ params }: PageProps) {
   }
 
   const order = result.data;
+
+  const checklistResult = await getOrderChecklist(id);
+  const checklists = checklistResult.success && checklistResult.data ? checklistResult.data : null;
 
   return (
     <div className="space-y-6">
@@ -59,6 +64,15 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
       {/* 상세 정보 */}
       <OrderDetailSections order={order} />
+
+      {/* 체크리스트 */}
+      {checklists && (
+        <OrderChecklist
+          orderId={id}
+          preparationItems={checklists.preparation}
+          installationItems={checklists.installation}
+        />
+      )}
 
       {/* 자재 현황 */}
       <OrderMaterialsTable orderId={id} />

@@ -5,7 +5,13 @@ import { getPresets } from '@/app/(dashboard)/closet/actions';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ClosetEditorPage() {
+interface PageProps {
+  searchParams: Promise<{ orderId?: string }>;
+}
+
+export default async function ClosetEditorPage({ searchParams }: PageProps) {
+  const { orderId } = await searchParams;
+
   // 사용자 프리셋 로딩 (에러 시 빈 배열 사용)
   const result = await getPresets();
   const userPresets = result.data || [];
@@ -26,7 +32,7 @@ export default async function ClosetEditorPage() {
 
       {/* Editor */}
       <div className="flex-1 min-h-0">
-        <ClosetEditorDynamic userPresets={userPresets} />
+        <ClosetEditorDynamic userPresets={userPresets} orderId={orderId} />
       </div>
     </div>
   );

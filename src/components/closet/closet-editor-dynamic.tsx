@@ -5,6 +5,7 @@ import type { ClosetPreset } from '@/app/(dashboard)/closet/actions';
 
 interface ClosetEditorDynamicProps {
   userPresets?: ClosetPreset[];
+  orderId?: string;
 }
 
 const ClosetEditorLazy = dynamic(
@@ -22,6 +23,6 @@ const ClosetEditorLazy = dynamic(
   }
 );
 
-export function ClosetEditorDynamic({ userPresets }: ClosetEditorDynamicProps) {
-  return <ClosetEditorLazy userPresets={userPresets} />;
+export function ClosetEditorDynamic({ userPresets, orderId }: ClosetEditorDynamicProps) {
+  return <ClosetEditorLazy userPresets={userPresets} orderId={orderId} />;
 }

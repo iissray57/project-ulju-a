@@ -22,6 +22,8 @@ import {
   type OrderStatus,
 } from '@/lib/schemas/order-status';
 import { transitionOrderStatus } from '@/app/(dashboard)/orders/actions';
+import { getOrderMaterialSummary } from '@/app/(dashboard)/orders/material-actions';
+import { ShortageAlertDialog } from '@/components/orders/shortage-alert-dialog';
 import { toast } from 'sonner';
 
 interface OrderStatusBarProps {
@@ -34,6 +36,10 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
+  const [showShortageDialog, setShowShortageDialog] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [shortageItems, setShortageItems] = useState<any[]>([]);
+  const [pendingTransition, setPendingTransition] = useState<OrderStatus | null>(null);
 
   const availableTransitions = ORDER_TRANSITIONS[currentStatus];
 
@@ -47,6 +53,40 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
       return;
     }
 
+    // material_held로 전이 시 자재 부족 확인
+    if (newStatus === 'material_held') {
+      setIsTransitioning(true);
+      try {
+        const result = await getOrderMaterialSummary(orderId);
+        if (result.error) {
+          toast.error(result.error);
+          setIsTransitioning(false);
+          return;
+        }
+
+        const shortages = result.data?.items.filter((item) => item.shortage_quantity > 0) ?? [];
+
+        if (shortages.length > 0) {
+          // 부족 품목이 있으면 경고 다이얼로그 표시
+          setShortageItems(result.data?.items ?? []);
+          setPendingTransition(newStatus);
+          setShowShortageDialog(true);
+          setIsTransitioning(false);
+          return;
+        }
+      } catch {
+        toast.error('자재 확인 중 오류가 발생했습니다.');
+        setIsTransitioning(false);
+        return;
+      }
+      setIsTransitioning(false);
+    }
+
+    // 부족 없거나 다른 상태 전이 → 바로 진행
+    await executeTransition(newStatus);
+  };
+
+  const executeTransition = async (newStatus: OrderStatus) => {
     setIsTransitioning(true);
     try {
       const result = await transitionOrderStatus(orderId, newStatus);
@@ -61,6 +101,19 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
     } finally {
       setIsTransitioning(false);
     }
+  };
+
+  const handleShortageConfirm = async () => {
+    setShowShortageDialog(false);
+    if (pendingTransition) {
+      await executeTransition(pendingTransition);
+      setPendingTransition(null);
+    }
+  };
+
+  const handleShortageCancel = () => {
+    setShowShortageDialog(false);
+    setPendingTransition(null);
   };
 
   const handleCancel = async () => {
@@ -258,6 +311,15 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 자재 부족 경고 다이얼로그 */}
+      <ShortageAlertDialog
+        open={showShortageDialog}
+        onOpenChange={setShowShortageDialog}
+        shortageItems={shortageItems}
+        onConfirm={handleShortageConfirm}
+        onCancel={handleShortageCancel}
+      />
     </div>
   );
 }

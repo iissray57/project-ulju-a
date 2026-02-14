@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { OrderList } from '@/components/orders/order-list';
+import { OrdersViewContainer } from '@/components/orders/orders-view-container';
 import { getOrders } from './actions';
 import type { Database } from '@/lib/database.types';
 
@@ -15,7 +15,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
   const status = params.status as OrderStatus | undefined;
   const search = params.q || '';
   const page = Number(params.page || '1');
-  const limit = 20;
+  const limit = 200; // Kanban needs all orders; pagination handled in list view
 
   const result = await getOrders({ status, search, page, limit });
 
@@ -47,7 +47,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
         </Button>
       </div>
 
-      <OrderList orders={orders} total={total} />
+      <OrdersViewContainer orders={orders} total={total} />
     </div>
   );
 }

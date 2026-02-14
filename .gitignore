@@ -20,7 +20,9 @@ __pycache__/
 Thumbs.db
 
 # Claude Code / OMC
-.omc/
+.omc/sessions/
+.omc/state/
+.omc/continuation-count.json
 .claude/
 
 # Build output

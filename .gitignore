@@ -27,8 +27,18 @@ Thumbs.db
 dist/
 build/
 out/
+.next/
 *.o
 *.so
+tsconfig.tsbuildinfo
+
+# Test output
+test-results/
+playwright-report/
+
+# PWA (generated at build time)
+public/sw.js
+public/sw.js.map
 
 # Logs
 *.log

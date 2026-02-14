@@ -6,8 +6,8 @@ export const orderFormSchema = z.object({
   customer_id: z.string().uuid(),
   closet_type: z.enum(['angle', 'system', 'mixed']).optional(),
   closet_spec: closetSpecSchema.optional(),
-  quotation_amount: z.number().nonnegative().default(0),
-  confirmed_amount: z.number().nonnegative().default(0),
+  quotation_amount: z.number().nonnegative(),
+  confirmed_amount: z.number().nonnegative(),
   measurement_date: z.string().optional(), // ISO date string
   installation_date: z.string().optional(),
   site_address: z.string().optional(),

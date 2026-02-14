@@ -3,6 +3,8 @@ import { ArrowLeft } from 'lucide-react';
 import { ClosetEditorDynamic } from '@/components/closet/closet-editor-dynamic';
 import { getPresets } from '@/app/(dashboard)/closet/actions';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ClosetEditorPage() {
   // 사용자 프리셋 로딩 (에러 시 빈 배열 사용)
   const result = await getPresets();

@@ -100,8 +100,8 @@ export function ScheduleCalendarView({
               key={label}
               className={cn(
                 'text-center text-sm font-semibold py-2',
-                index === 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground',
-                index === 6 && 'text-blue-600 dark:text-blue-400'
+                index === 0 ? 'text-red-500 dark:text-red-400' : 'text-muted-foreground',
+                index === 6 && 'text-blue-500 dark:text-blue-400'
               )}
             >
               {label}
@@ -139,8 +139,8 @@ export function ScheduleCalendarView({
                   className={cn(
                     'text-sm font-medium mb-1',
                     !isCurrentMonth && 'opacity-40',
-                    isSunday && 'text-red-600 dark:text-red-400',
-                    isSaturday && 'text-blue-600 dark:text-blue-400'
+                    isSunday && 'text-red-500 dark:text-red-400',
+                    isSaturday && 'text-blue-500 dark:text-blue-400'
                   )}
                 >
                   {date.getDate()}
@@ -225,7 +225,7 @@ export function ScheduleCalendarView({
                         )}
                       </div>
                       {schedule.is_completed && (
-                        <span className="text-xs text-green-600 dark:text-green-400">
+                        <span className="text-xs text-green-500 dark:text-green-400 shrink-0">
                           완료
                         </span>
                       )}

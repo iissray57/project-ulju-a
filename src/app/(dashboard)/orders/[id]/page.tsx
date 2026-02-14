@@ -25,8 +25,8 @@ export default async function OrderDetailPage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1 w-full sm:w-auto">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" asChild>
               <Link href="/orders" className="text-muted-foreground hover:text-foreground">
@@ -34,17 +34,17 @@ export default async function OrderDetailPage({ params }: PageProps) {
               </Link>
             </Button>
           </div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-2xl sm:text-3xl font-bold break-words">
             {order.order_number}
             {order.customer && (
-              <span className="text-muted-foreground ml-3 text-2xl">
+              <span className="text-muted-foreground ml-2 sm:ml-3 text-xl sm:text-2xl">
                 · {order.customer.name}
               </span>
             )}
           </h1>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" asChild>
+        <div className="flex gap-3 w-full sm:w-auto">
+          <Button variant="outline" asChild className="flex-1 sm:flex-none">
             <Link href={`/orders/${id}/edit`}>수정</Link>
           </Button>
         </div>

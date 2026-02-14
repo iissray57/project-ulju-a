@@ -131,16 +131,17 @@ export function CustomerForm({ customerId, defaultValues }: CustomerFormProps) {
         )}
       </div>
 
-      <div className="flex gap-3 justify-end">
+      <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
         <Button
           type="button"
           variant="outline"
           onClick={() => router.back()}
           disabled={isSubmitting}
+          className="w-full sm:w-auto"
         >
           취소
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
           {isSubmitting ? '처리 중...' : customerId ? '수정' : '등록'}
         </Button>
       </div>

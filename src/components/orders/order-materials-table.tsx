@@ -54,7 +54,8 @@ export async function OrderMaterialsTable({ orderId }: OrderMaterialsTableProps)
         <CardTitle>자재 현황</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>품목명</TableHead>
@@ -109,7 +110,7 @@ export async function OrderMaterialsTable({ orderId }: OrderMaterialsTableProps)
                     {hasShortage ? (
                       <Badge variant="destructive">부족</Badge>
                     ) : (
-                      <Badge variant="secondary" className="bg-green-500/10 text-green-600 dark:text-green-400">
+                      <Badge variant="secondary" className="bg-green-500/10 text-green-600 dark:bg-green-950/30 dark:text-green-400">
                         충분
                       </Badge>
                     )}
@@ -119,6 +120,7 @@ export async function OrderMaterialsTable({ orderId }: OrderMaterialsTableProps)
             })}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
   );

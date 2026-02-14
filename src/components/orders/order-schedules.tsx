@@ -103,30 +103,30 @@ export async function OrderSchedules({ orderId }: OrderSchedulesProps) {
                 className="flex items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
               >
                 {/* 완료 상태 아이콘 */}
-                <div className="mt-0.5">
+                <div className="mt-0.5 shrink-0">
                   {schedule.is_completed ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    <CheckCircle2 className="h-5 w-5 text-green-500 dark:text-green-400" />
                   ) : (
                     <Circle className="h-5 w-5 text-muted-foreground" />
                   )}
                 </div>
 
                 {/* 스케줄 정보 */}
-                <div className="flex-1 space-y-1.5">
-                  <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant={getScheduleTypeBadgeVariant(schedule.type)}>
                       {getScheduleTypeLabel(schedule.type)}
                     </Badge>
-                    <span className="font-medium">{schedule.title}</span>
+                    <span className="font-medium truncate">{schedule.title}</span>
                   </div>
 
                   {/* 날짜 & 시간 */}
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap">
+                    <Calendar className="h-3.5 w-3.5 shrink-0" />
                     <span>{formatDate(schedule.scheduled_date)}</span>
                     {schedule.scheduled_time && (
                       <>
-                        <Clock className="ml-2 h-3.5 w-3.5" />
+                        <Clock className="ml-2 h-3.5 w-3.5 shrink-0" />
                         <span>{formatTime(schedule.scheduled_time)}</span>
                       </>
                     )}
@@ -135,14 +135,14 @@ export async function OrderSchedules({ orderId }: OrderSchedulesProps) {
                   {/* 장소 */}
                   {schedule.location && (
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>{schedule.location}</span>
+                      <MapPin className="h-3.5 w-3.5 shrink-0" />
+                      <span className="break-words">{schedule.location}</span>
                     </div>
                   )}
 
                   {/* 메모 */}
                   {schedule.memo && (
-                    <p className="text-sm text-muted-foreground">{schedule.memo}</p>
+                    <p className="text-sm text-muted-foreground break-words">{schedule.memo}</p>
                   )}
                 </div>
               </div>

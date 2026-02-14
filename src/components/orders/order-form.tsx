@@ -151,13 +151,13 @@ export function OrderForm({ orderId, defaultValues }: OrderFormProps) {
               aria-invalid={!!errors.customer_id}
             />
             {showCustomerDropdown && customers.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto">
+              <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-auto">
                 {customers.map((customer) => (
                   <button
                     key={customer.id}
                     type="button"
                     onClick={() => handleCustomerSelect(customer)}
-                    className="w-full px-4 py-2 text-left hover:bg-accent transition-colors"
+                    className="w-full px-4 py-2 text-left hover:bg-accent hover:text-accent-foreground transition-colors"
                   >
                     <div className="font-medium">{customer.name}</div>
                     <div className="text-sm text-muted-foreground">{customer.phone}</div>
@@ -167,7 +167,7 @@ export function OrderForm({ orderId, defaultValues }: OrderFormProps) {
             )}
           </div>
           {selectedCustomer && (
-            <div className="p-3 bg-accent/50 rounded-md text-sm">
+            <div className="p-3 bg-muted rounded-md text-sm border">
               <div>
                 <span className="font-medium">선택된 고객:</span> {selectedCustomer.name}
               </div>
@@ -343,11 +343,11 @@ export function OrderForm({ orderId, defaultValues }: OrderFormProps) {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 justify-end">
-        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
+      <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting} className="w-full sm:w-auto">
           취소
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
           {isSubmitting ? '처리 중...' : orderId ? '수정' : '등록'}
         </Button>
       </div>

@@ -181,7 +181,7 @@ export function ScheduleAgendaView({ schedules }: ScheduleAgendaViewProps) {
 
                       {/* 충돌 경고 */}
                       {hasConflict && !isCompleted && (
-                        <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-2 rounded">
+                        <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20 p-2 rounded border border-amber-200 dark:border-amber-900">
                           <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
                           <div className="space-y-1">
                             <p className="font-medium">시간 충돌</p>

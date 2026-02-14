@@ -98,7 +98,7 @@ function KanbanColumn({
   });
 
   return (
-    <div className="flex flex-col min-w-[260px] max-w-[300px] shrink-0">
+    <div className="flex flex-col min-w-[240px] w-[280px] sm:min-w-[260px] sm:max-w-[300px] shrink-0">
       {/* Column header */}
       <div className="flex items-center gap-2 px-3 py-2 mb-2">
         <div

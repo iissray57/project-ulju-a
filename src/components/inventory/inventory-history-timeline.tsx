@@ -50,31 +50,31 @@ function getTransactionTypeBadge(type: TransactionType) {
   switch (type) {
     case 'inbound':
       return (
-        <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400">
+        <Badge className="bg-blue-500/10 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400">
           {label}
         </Badge>
       );
     case 'outbound':
       return (
-        <Badge className="bg-orange-500/10 text-orange-600 dark:text-orange-400">
+        <Badge className="bg-orange-500/10 text-orange-600 dark:bg-orange-950/30 dark:text-orange-400">
           {label}
         </Badge>
       );
     case 'hold':
       return (
-        <Badge className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+        <Badge className="bg-yellow-500/10 text-yellow-600 dark:bg-yellow-950/30 dark:text-yellow-400">
           {label}
         </Badge>
       );
     case 'release_hold':
       return (
-        <Badge className="bg-green-500/10 text-green-600 dark:text-green-400">
+        <Badge className="bg-green-500/10 text-green-600 dark:bg-green-950/30 dark:text-green-400">
           {label}
         </Badge>
       );
     case 'adjustment':
       return (
-        <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400">
+        <Badge className="bg-purple-500/10 text-purple-600 dark:bg-purple-950/30 dark:text-purple-400">
           {label}
         </Badge>
       );
@@ -142,8 +142,8 @@ export function InventoryHistoryTimeline({
                           <span
                             className={
                               transaction.quantity >= 0
-                                ? 'text-green-600 dark:text-green-400'
-                                : 'text-red-600 dark:text-red-400'
+                                ? 'text-green-500 dark:text-green-400'
+                                : 'text-red-500 dark:text-red-400'
                             }
                           >
                             {quantityChange}

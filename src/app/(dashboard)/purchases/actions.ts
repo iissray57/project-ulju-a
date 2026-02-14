@@ -524,8 +524,8 @@ export async function updatePurchaseOrderItem(
       return { error: '품목을 찾을 수 없습니다.' };
     }
 
-    // @ts-expect-error - join 결과 타입 불일치
-    if (item.purchase_order?.user_id !== user.id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((item.purchase_order as any)?.user_id !== user.id) {
       return { error: '권한이 없습니다.' };
     }
 
@@ -596,8 +596,8 @@ export async function removePurchaseOrderItem(itemId: string): Promise<ActionRes
       return { error: '품목을 찾을 수 없습니다.' };
     }
 
-    // @ts-expect-error - join 결과 타입 불일치
-    if (item.purchase_order?.user_id !== user.id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((item.purchase_order as any)?.user_id !== user.id) {
       return { error: '권한이 없습니다.' };
     }
 

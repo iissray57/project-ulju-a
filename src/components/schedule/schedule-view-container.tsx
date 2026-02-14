@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Calendar, List } from 'lucide-react';
+import { Calendar, List, Clock } from 'lucide-react';
 import { ViewSwitcher } from '@/components/common/view-switcher';
 import { useViewState } from '@/hooks/use-view-state';
 import { ScheduleCalendarView } from './schedule-calendar-view';
+import { ScheduleWeeklyView } from './schedule-weekly-view';
 import type { ScheduleWithOrder } from '@/app/(dashboard)/schedule/actions';
 import type { ViewConfig } from '@/lib/types/views';
 
@@ -22,6 +24,16 @@ const SCHEDULE_VIEWS: ViewConfig[] = [
     defaultForBreakpoint: {
       desktop: true,
       tablet: true,
+      mobile: false,
+    },
+  },
+  {
+    type: 'weekly',
+    label: '주간',
+    icon: Clock,
+    defaultForBreakpoint: {
+      desktop: false,
+      tablet: false,
       mobile: false,
     },
   },
@@ -52,8 +64,11 @@ export function ScheduleViewContainer({
       tablet: 'calendar',
       desktop: 'calendar',
     },
-    availableViews: ['calendar', 'agenda'],
+    availableViews: ['calendar', 'weekly', 'agenda'],
   });
+
+  // Weekly 뷰용 주 상태 관리
+  const [weeklyDate, setWeeklyDate] = useState<Date>(new Date());
 
   const handleMonthChange = (year: number, month: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -79,6 +94,14 @@ export function ScheduleViewContainer({
           initialYear={initialYear}
           initialMonth={initialMonth}
           onMonthChange={handleMonthChange}
+        />
+      )}
+
+      {view === 'weekly' && (
+        <ScheduleWeeklyView
+          schedules={schedules}
+          currentDate={weeklyDate}
+          onWeekChange={setWeeklyDate}
         />
       )}
 

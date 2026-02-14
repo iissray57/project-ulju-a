@@ -7,6 +7,7 @@ export type ViewType =
   | 'timeline'
   | 'calendar'
   | 'agenda'
+  | 'weekly'
   | 'map'
   | 'summary';
 

@@ -24,6 +24,7 @@ type EditorAction =
   | { type: 'SET_GRID_SIZE'; payload: number }
   | { type: 'TOGGLE_SNAP' }
   | { type: 'TOGGLE_DIMENSIONS' }
+  | { type: 'RESET_CAMERA' }
   | { type: 'LOAD_STATE'; payload: EditorState }
   | { type: 'CLEAR_ALL' };
 
@@ -67,6 +68,9 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
 
     case 'TOGGLE_DIMENSIONS':
       return { ...state, showDimensions: !state.showDimensions };
+
+    case 'RESET_CAMERA':
+      return { ...state, cameraResetCounter: state.cameraResetCounter + 1 };
 
     case 'LOAD_STATE':
       return action.payload;

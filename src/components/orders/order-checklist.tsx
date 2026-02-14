@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Download } from 'lucide-react';
 import { ChecklistItem } from '@/lib/schemas/checklist';
 import { updateOrderChecklist, resetOrderChecklist } from '@/app/(dashboard)/orders/checklist-actions';
 import { toast } from 'sonner';
@@ -114,10 +114,39 @@ export function OrderChecklist({ orderId, preparationItems, installationItems }:
   const prepProgress = preparation.filter((item) => item.checked).length;
   const instProgress = installation.filter((item) => item.checked).length;
 
+  const handleDownloadPDF = async () => {
+    try {
+      const response = await fetch(`/api/pdf?type=checklist&orderId=${orderId}`);
+      if (!response.ok) {
+        toast.error('PDF 생성 실패', { description: '다시 시도해주세요.' });
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `checklist_${orderId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('PDF 다운로드 완료');
+    } catch (error) {
+      console.error('PDF download error:', error);
+      toast.error('PDF 다운로드 실패', { description: '다시 시도해주세요.' });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>작업 체크리스트</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>작업 체크리스트</CardTitle>
+          <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
+            <Download className="mr-2 h-4 w-4" />
+            PDF 다운로드
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Accordion type="multiple" className="w-full">

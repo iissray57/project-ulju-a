@@ -9,6 +9,7 @@ import { OrderSchedules } from '@/components/orders/order-schedules';
 import { OrderMaterialsTable } from '@/components/orders/order-materials-table';
 import { OrderChecklist } from '@/components/orders/order-checklist';
 import { getOrderChecklist } from '../checklist-actions';
+import { QuotationDownloadButton } from '@/components/orders/quotation-download-button';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -49,6 +50,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
           </h1>
         </div>
         <div className="flex gap-3 w-full sm:w-auto">
+          <QuotationDownloadButton orderId={id} />
           <Button variant="outline" asChild className="flex-1 sm:flex-none">
             <Link href={`/orders/${id}/edit`}>수정</Link>
           </Button>

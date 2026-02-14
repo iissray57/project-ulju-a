@@ -1,8 +1,13 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { ClosetEditorDynamic } from '@/components/closet/closet-editor-dynamic';
+import { getPresets } from '@/app/(dashboard)/closet/actions';
 
-export default function ClosetEditorPage() {
+export default async function ClosetEditorPage() {
+  // 사용자 프리셋 로딩 (에러 시 빈 배열 사용)
+  const result = await getPresets();
+  const userPresets = result.data || [];
+
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col lg:h-dvh">
       {/* Header bar */}
@@ -19,7 +24,7 @@ export default function ClosetEditorPage() {
 
       {/* Editor */}
       <div className="flex-1 min-h-0">
-        <ClosetEditorDynamic />
+        <ClosetEditorDynamic userPresets={userPresets} />
       </div>
     </div>
   );

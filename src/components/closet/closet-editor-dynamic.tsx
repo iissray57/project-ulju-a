@@ -1,6 +1,11 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import type { ClosetPreset } from '@/app/(dashboard)/closet/actions';
+
+interface ClosetEditorDynamicProps {
+  userPresets?: ClosetPreset[];
+}
 
 const ClosetEditorLazy = dynamic(
   () => import('./closet-editor').then((mod) => ({ default: mod.ClosetEditor })),
@@ -17,4 +22,6 @@ const ClosetEditorLazy = dynamic(
   }
 );
 
-export { ClosetEditorLazy as ClosetEditorDynamic };
+export function ClosetEditorDynamic({ userPresets }: ClosetEditorDynamicProps) {
+  return <ClosetEditorLazy userPresets={userPresets} />;
+}

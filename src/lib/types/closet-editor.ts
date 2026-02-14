@@ -20,6 +20,7 @@ export interface EditorState {
   gridSize: number;
   snapEnabled: boolean;
   showDimensions: boolean;
+  cameraResetCounter: number; // Increment to trigger camera reset
 }
 
 export const DEFAULT_EDITOR_STATE: EditorState = {
@@ -29,4 +30,5 @@ export const DEFAULT_EDITOR_STATE: EditorState = {
   gridSize: 50, // mm
   snapEnabled: true,
   showDimensions: true,
+  cameraResetCounter: 0,
 };

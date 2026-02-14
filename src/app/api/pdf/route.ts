@@ -2,9 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import React from 'react';
 import { Document, Page, View, Text, renderToBuffer } from '@react-pdf/renderer';
 import { createClient } from '@/lib/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { registerPDFKoreanFonts } from '@/lib/pdf/fonts';
 import { pdfStyles } from '@/lib/pdf/styles';
 import { PDFHeader, PDFFooter, PDFTable, PDFSection, PDFRow, PDFDivider } from '@/lib/pdf/components';
+import {
+  generateQuotationDocument,
+  type QuotationData,
+} from '@/lib/pdf/quotation-document';
+import { createChecklistDocument } from '@/lib/pdf/checklist-document';
+import {
+  DEFAULT_PREPARATION_CHECKLIST,
+  DEFAULT_INSTALLATION_CHECKLIST,
+  type ChecklistItem,
+} from '@/lib/schemas/checklist';
 
 // 한글 폰트 등록
 registerPDFKoreanFonts();
@@ -44,16 +55,137 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 추후 quotation, invoice 등 타입별 PDF 생성
+    // quotation PDF 생성
     if (type === 'quotation' && orderId) {
-      // T6.2에서 구현 예정
-      return NextResponse.json({ error: 'Not implemented yet' }, { status: 501 });
+      const quotationResult = await generateQuotationPDF(supabase, user.id, orderId);
+
+      if ('error' in quotationResult) {
+        return NextResponse.json({ error: quotationResult.error }, { status: 400 });
+      }
+
+      return new NextResponse(quotationResult.buffer as BodyInit, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${quotationResult.filename}"`,
+        },
+      });
+    }
+
+    // checklist PDF 생성
+    if (type === 'checklist' && orderId) {
+      const checklistResult = await generateChecklistPDF(supabase, user.id, orderId);
+
+      if ('error' in checklistResult) {
+        return NextResponse.json({ error: checklistResult.error }, { status: 400 });
+      }
+
+      return new NextResponse(checklistResult.buffer as BodyInit, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${checklistResult.filename}"`,
+        },
+      });
     }
 
     return NextResponse.json({ error: 'Invalid type or missing parameters' }, { status: 400 });
   } catch (error) {
     console.error('PDF generation error:', error);
     return NextResponse.json({ error: 'PDF generation failed' }, { status: 500 });
+  }
+}
+
+/**
+ * 견적서 PDF 생성
+ * @param supabase - Supabase client
+ * @param userId - 사용자 ID
+ * @param orderId - 수주 ID
+ * @returns { buffer, filename } 또는 { error }
+ */
+async function generateQuotationPDF(
+  supabase: SupabaseClient,
+  userId: string,
+  orderId: string
+): Promise<{ buffer: Buffer; filename: string } | { error: string }> {
+  try {
+    // 수주 + 고객 정보 조회
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select(
+        `
+        id,
+        order_number,
+        status,
+        total_amount,
+        installation_date,
+        notes,
+        created_at,
+        customer:customers(name, phone, address)
+      `
+      )
+      .eq('id', orderId)
+      .eq('user_id', userId)
+      .single();
+
+    if (orderError || !orderData) {
+      console.error('[generateQuotationPDF] Order fetch error:', orderError);
+      return { error: '수주를 찾을 수 없습니다.' };
+    }
+
+    // customer가 배열로 반환되므로 첫 번째 요소 사용
+    const customerData = Array.isArray(orderData.customer)
+      ? orderData.customer[0]
+      : orderData.customer;
+
+    if (!customerData || typeof customerData !== 'object') {
+      return { error: '고객 정보를 찾을 수 없습니다.' };
+    }
+
+    // Type assertion after runtime check
+    const customer = customerData as { name: string; phone: string; address: string };
+
+    // 자재 목록 조회
+    const { data: materialsData, error: materialsError } = await supabase
+      .from('order_materials')
+      .select('product_name, quantity, unit_price, subtotal, memo')
+      .eq('order_id', orderId)
+      .order('created_at', { ascending: true });
+
+    if (materialsError) {
+      console.error('[generateQuotationPDF] Materials fetch error:', materialsError);
+      return { error: '자재 목록 조회에 실패했습니다.' };
+    }
+
+    // QuotationData 구성
+    const quotationData: QuotationData = {
+      order: {
+        id: orderData.id,
+        order_number: orderData.order_number,
+        status: orderData.status,
+        total_amount: orderData.total_amount,
+        installation_date: orderData.installation_date,
+        notes: orderData.notes,
+        created_at: orderData.created_at,
+      },
+      customer: {
+        name: customer.name,
+        phone: customer.phone,
+        address: customer.address,
+      },
+      materials: materialsData || [],
+    };
+
+    // PDF 문서 생성
+    const document = generateQuotationDocument(quotationData);
+    const buffer = await renderToBuffer(document);
+
+    const filename = `견적서_${orderData.order_number}.pdf`;
+
+    return { buffer, filename };
+  } catch (err) {
+    console.error('[generateQuotationPDF] Unexpected error:', err);
+    return { error: 'PDF 생성 중 오류가 발생했습니다.' };
   }
 }
 
@@ -151,4 +283,83 @@ async function generateTestPDF() {
 
   const buffer = await renderToBuffer(TestDocument);
   return buffer;
+}
+
+/**
+ * 체크리스트 PDF 생성
+ * @param supabase - Supabase client
+ * @param userId - 사용자 ID
+ * @param orderId - 수주 ID
+ * @returns { buffer, filename } 또는 { error }
+ */
+async function generateChecklistPDF(
+  supabase: SupabaseClient,
+  userId: string,
+  orderId: string
+): Promise<{ buffer: Buffer; filename: string } | { error: string }> {
+  try {
+    // 수주 + 고객 + 체크리스트 조회
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select(
+        `
+        id,
+        order_number,
+        installation_date,
+        created_at,
+        preparation_checklist,
+        installation_checklist,
+        customer:customers(name, phone)
+      `
+      )
+      .eq('id', orderId)
+      .eq('user_id', userId)
+      .single();
+
+    if (orderError || !orderData) {
+      console.error('[generateChecklistPDF] Order fetch error:', orderError);
+      return { error: '수주를 찾을 수 없습니다.' };
+    }
+
+    // 체크리스트 데이터 (없으면 기본값 사용)
+    const preparationChecklist =
+      (orderData.preparation_checklist as ChecklistItem[] | null) ?? DEFAULT_PREPARATION_CHECKLIST;
+    const installationChecklist =
+      (orderData.installation_checklist as ChecklistItem[] | null) ?? DEFAULT_INSTALLATION_CHECKLIST;
+
+    // Supabase join returns array, get first element
+    const rawCustomer = orderData.customer;
+    const customerData = (Array.isArray(rawCustomer) ? rawCustomer[0] : rawCustomer) as unknown;
+
+    if (!customerData || typeof customerData !== 'object') {
+      console.error('[generateChecklistPDF] Customer data missing');
+      return { error: '고객 정보를 찾을 수 없습니다.' };
+    }
+
+    // Type assertion after runtime check
+    const customer = customerData as { name: string; phone: string };
+
+    // PDF 문서 생성
+    const document = createChecklistDocument({
+      order: {
+        order_number: orderData.order_number,
+        installation_date: orderData.installation_date,
+        created_at: orderData.created_at,
+      },
+      customer: {
+        name: customer.name,
+        phone: customer.phone,
+      },
+      preparation: preparationChecklist,
+      installation: installationChecklist,
+    });
+
+    const buffer = await renderToBuffer(document);
+    const filename = `체크리스트_${orderData.order_number}.pdf`;
+
+    return { buffer, filename };
+  } catch (err) {
+    console.error('[generateChecklistPDF] Unexpected error:', err);
+    return { error: 'PDF 생성 중 오류가 발생했습니다.' };
+  }
 }

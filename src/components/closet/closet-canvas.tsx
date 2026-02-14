@@ -1,22 +1,32 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Grid, OrbitControls, OrthographicCamera, PerspectiveCamera } from '@react-three/drei';
 import { useTheme } from 'next-themes';
 import { useEditorState, useEditorDispatch } from './editor-context';
 import { ClosetComponentMesh } from './closet-component-mesh';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 function Scene() {
-  const { components, cameraMode, gridSize } = useEditorState();
+  const { components, cameraMode, gridSize, cameraResetCounter } = useEditorState();
   const dispatch = useEditorDispatch();
   const { resolvedTheme } = useTheme();
+  const controlsRef = useRef<OrbitControlsImpl>(null);
 
   const isDark = resolvedTheme === 'dark';
 
   // Grid cell size in scene units (gridSize mm -> scene units at 1:100)
   const cellSize = gridSize / 100;
   const sectionSize = cellSize * 10;
+
+  // Camera reset: reset controls target and camera position
+  useEffect(() => {
+    if (cameraResetCounter > 0 && controlsRef.current) {
+      controlsRef.current.target.set(0, 0, 0);
+      controlsRef.current.update();
+    }
+  }, [cameraResetCounter]);
 
   const handlePointerMissed = useCallback(() => {
     dispatch({ type: 'SELECT_COMPONENT', payload: null });
@@ -32,6 +42,7 @@ function Scene() {
           zoom={80}
           near={0.1}
           far={100}
+          key={`ortho-${cameraResetCounter}`}
         />
       ) : (
         <PerspectiveCamera
@@ -40,16 +51,25 @@ function Scene() {
           fov={50}
           near={0.1}
           far={200}
+          key={`persp-${cameraResetCounter}`}
         />
       )}
 
       {/* Controls */}
       <OrbitControls
+        ref={controlsRef}
         enableRotate={cameraMode === '3d'}
         enablePan
         enableZoom
-        maxPolarAngle={cameraMode === '2d' ? 0 : Math.PI / 2}
+        // 2D mode: top-down view locked
+        maxPolarAngle={cameraMode === '2d' ? 0 : Math.PI / 2.1}
         minPolarAngle={cameraMode === '2d' ? 0 : 0}
+        // 2D mode: zoom limits
+        minZoom={cameraMode === '2d' ? 20 : undefined}
+        maxZoom={cameraMode === '2d' ? 200 : undefined}
+        // 3D mode: distance limits
+        minDistance={cameraMode === '3d' ? 2 : undefined}
+        maxDistance={cameraMode === '3d' ? 50 : undefined}
       />
 
       {/* Lighting */}

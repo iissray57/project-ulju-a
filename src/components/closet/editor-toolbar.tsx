@@ -1,13 +1,13 @@
 'use client';
 
 import {
-  Box,
   Eye,
   EyeOff,
   Grid3X3,
   Magnet,
+  Menu,
   Move3D,
-  Plus,
+  RotateCcw,
   SquareStack,
   Trash2,
 } from 'lucide-react';
@@ -22,29 +22,15 @@ const GRID_SIZES = [
   { value: 100, label: '100mm' },
 ];
 
-export function EditorToolbar() {
+interface EditorToolbarProps {
+  onOpenMobilePalette?: () => void;
+}
+
+export function EditorToolbar({ onOpenMobilePalette }: EditorToolbarProps) {
   const state = useEditorState();
   const dispatch = useEditorDispatch();
 
   const selectedComponent = state.components.find((c) => c.id === state.selectedId);
-
-  const handleAddSampleBox = () => {
-    const id = crypto.randomUUID();
-    dispatch({
-      type: 'ADD_COMPONENT',
-      payload: {
-        id,
-        name: `박스 ${state.components.length + 1}`,
-        position: [0, 1, 0],
-        rotation: [0, 0, 0],
-        scale: [1, 1, 1],
-        dimensions: { width: 600, height: 2000, depth: 500 },
-        color: '#8b7355',
-        material: 'wood',
-        locked: false,
-      },
-    });
-  };
 
   const handleDelete = () => {
     if (state.selectedId) {
@@ -54,6 +40,19 @@ export function EditorToolbar() {
 
   return (
     <div className="flex flex-wrap items-center gap-1 border-b border-border bg-background px-3 py-2">
+      {/* Mobile: 부품 팔레트 열기 버튼 */}
+      <Button
+        variant="outline"
+        size="xs"
+        onClick={onOpenMobilePalette}
+        className="lg:hidden"
+        title="부품 팔레트 열기"
+      >
+        <Menu className="size-3.5" />
+      </Button>
+
+      <Separator orientation="vertical" className="mx-1 h-6 lg:hidden" />
+
       {/* Camera mode toggle */}
       <div className="flex items-center gap-1 rounded-md border border-border p-0.5">
         <Button
@@ -75,6 +74,16 @@ export function EditorToolbar() {
           <span className="text-xs">3D</span>
         </Button>
       </div>
+
+      {/* Camera reset */}
+      <Button
+        variant="ghost"
+        size="xs"
+        onClick={() => dispatch({ type: 'RESET_CAMERA' })}
+        title="카메라 리셋"
+      >
+        <RotateCcw className="size-3.5" />
+      </Button>
 
       <Separator orientation="vertical" className="mx-1 h-6" />
 
@@ -120,14 +129,6 @@ export function EditorToolbar() {
           </Button>
         ))}
       </div>
-
-      <Separator orientation="vertical" className="mx-1 h-6" />
-
-      {/* Add sample box */}
-      <Button variant="outline" size="xs" onClick={handleAddSampleBox} title="샘플 박스 추가">
-        <Plus className="size-3.5" />
-        <Box className="size-3.5" />
-      </Button>
 
       {/* Spacer */}
       <div className="flex-1" />

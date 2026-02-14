@@ -25,6 +25,7 @@ type EditorAction =
   | { type: 'TOGGLE_SNAP' }
   | { type: 'TOGGLE_DIMENSIONS' }
   | { type: 'RESET_CAMERA' }
+  | { type: 'SET_DRAGGING'; payload: boolean }
   | { type: 'LOAD_STATE'; payload: EditorState }
   | { type: 'CLEAR_ALL' };
 
@@ -71,6 +72,9 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
 
     case 'RESET_CAMERA':
       return { ...state, cameraResetCounter: state.cameraResetCounter + 1 };
+
+    case 'SET_DRAGGING':
+      return { ...state, isDragging: action.payload };
 
     case 'LOAD_STATE':
       return action.payload;

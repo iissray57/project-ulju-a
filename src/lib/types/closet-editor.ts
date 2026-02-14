@@ -21,6 +21,7 @@ export interface EditorState {
   snapEnabled: boolean;
   showDimensions: boolean;
   cameraResetCounter: number; // Increment to trigger camera reset
+  isDragging: boolean; // True while a component is being dragged
 }
 
 export const DEFAULT_EDITOR_STATE: EditorState = {
@@ -31,4 +32,5 @@ export const DEFAULT_EDITOR_STATE: EditorState = {
   snapEnabled: true,
   showDimensions: true,
   cameraResetCounter: 0,
+  isDragging: false,
 };

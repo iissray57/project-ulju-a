@@ -47,3 +47,17 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   revenue_confirmed: '매출 확정',
   cancelled: '취소',
 };
+
+// 상태별 색상 (Tailwind classes)
+export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
+  inquiry: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  quotation_sent: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  confirmed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  measurement_done: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
+  date_fixed: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
+  material_held: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+  installed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
+  settlement_wait: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+  revenue_confirmed: 'bg-stone-100 text-stone-800 dark:bg-stone-900/30 dark:text-stone-300',
+  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+};

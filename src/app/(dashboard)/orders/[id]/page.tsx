@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { getOrder } from '../actions';
 import { OrderStatusBar } from '@/components/orders/order-status-bar';
 import { OrderDetailSections } from '@/components/orders/order-detail-sections';
+import { OrderSchedules } from '@/components/orders/order-schedules';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -57,6 +58,9 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
       {/* 상세 정보 */}
       <OrderDetailSections order={order} />
+
+      {/* 관련 일정 */}
+      <OrderSchedules orderId={id} />
     </div>
   );
 }

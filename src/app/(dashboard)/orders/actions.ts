@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { Database, TablesInsert, TablesUpdate } from '@/lib/database.types';
 import { orderFormSchema, type OrderFormData } from '@/lib/schemas/order';
 import { canTransition } from '@/lib/schemas/order-status';
+import { syncOrderSchedule } from '@/lib/utils/order-schedule-sync';
 import { revalidatePath } from 'next/cache';
 
 type OrderRow = Database['public']['Tables']['orders']['Row'];
@@ -440,8 +441,17 @@ export async function transitionOrderStatus(
       return { error: '업데이트 후 데이터 조회에 실패했습니다.' };
     }
 
+    // 스케줄 자동 생성
+    await syncOrderSchedule(orderId, newStatus, {
+      order_number: order.order_number,
+      measurement_date: order.measurement_date,
+      installation_date: order.installation_date,
+      site_address: order.site_address,
+    });
+
     revalidatePath('/orders');
     revalidatePath(`/orders/${orderId}`);
+    revalidatePath('/schedule');
     return { data: updatedOrder };
   } catch (err) {
     console.error('[transitionOrderStatus] Unexpected error:', err);

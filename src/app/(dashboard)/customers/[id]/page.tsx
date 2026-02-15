@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCustomer } from '../actions';
+import { DeleteCustomerButton } from '@/components/customers/delete-customer-button';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -32,6 +33,7 @@ export default async function CustomerDetailPage({ params }: PageProps) {
           <Button asChild>
             <Link href={`/customers/${id}/edit`}>수정</Link>
           </Button>
+          <DeleteCustomerButton customerId={id} customerName={customer.name} />
         </div>
       </div>
 
@@ -76,11 +78,11 @@ export default async function CustomerDetailPage({ params }: PageProps) {
         {/* 통계 정보 (placeholder) */}
         <Card>
           <CardHeader>
-            <CardTitle>수주 통계</CardTitle>
+            <CardTitle>주문 통계</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <div className="text-sm text-muted-foreground mb-1">총 수주 건수</div>
+              <div className="text-sm text-muted-foreground mb-1">총 주문 건수</div>
               <div className="text-2xl font-bold">-</div>
             </div>
             <div>
@@ -88,20 +90,20 @@ export default async function CustomerDetailPage({ params }: PageProps) {
               <div className="text-2xl font-bold">-</div>
             </div>
             <div className="text-sm text-muted-foreground pt-2">
-              * 수주 관리 기능 구현 후 표시됩니다
+              * 주문 관리 기능 구현 후 표시됩니다
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* 수주 목록 (placeholder) */}
+      {/* 주문 목록 (placeholder) */}
       <Card>
         <CardHeader>
-          <CardTitle>수주 목록</CardTitle>
+          <CardTitle>주문 목록</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
-            수주 관리 기능이 구현되면 여기에 수주 목록이 표시됩니다
+            주문 관리 기능이 구현되면 여기에 주문 목록이 표시됩니다
           </div>
         </CardContent>
       </Card>

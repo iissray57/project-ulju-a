@@ -104,7 +104,7 @@ export function CustomerList({ customers, total }: CustomerListProps) {
               <TableHead>고객명</TableHead>
               <TableHead>연락처</TableHead>
               <TableHead>주소</TableHead>
-              <TableHead className="text-right">수주건수</TableHead>
+              <TableHead className="text-right">주문건수</TableHead>
               <TableHead className="text-right">매출</TableHead>
             </TableRow>
           </TableHeader>

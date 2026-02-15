@@ -100,7 +100,7 @@ export async function getCustomer(id: string): Promise<ActionResult<Customer>> {
 }
 
 /**
- * 고객 생성
+ * 고객 생성 (중복 시 기존 고객 반환)
  */
 export async function createCustomer(
   input: unknown
@@ -120,6 +120,29 @@ export async function createCustomer(
       return { error: `입력값 검증 실패: ${parsed.error.message}` };
     }
 
+    // 중복 체크: 같은 이름 + 전화번호 고객이 있는지 확인
+    const { data: existing } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('name', parsed.data.name)
+      .eq('phone', parsed.data.phone || '')
+      .maybeSingle();
+
+    if (existing) {
+      // 기존 고객 반환 (주소가 다르면 업데이트)
+      if (parsed.data.address && parsed.data.address !== existing.address) {
+        const { data: updated } = await supabase
+          .from('customers')
+          .update({ address: parsed.data.address, updated_at: new Date().toISOString() })
+          .eq('id', existing.id)
+          .select()
+          .single();
+        return { data: updated || existing };
+      }
+      return { data: existing };
+    }
+
     const insertData: CustomerInsert = {
       ...parsed.data,
       user_id: user.id,
@@ -132,6 +155,19 @@ export async function createCustomer(
       .single();
 
     if (error) {
+      // 중복 제약 위반 시 기존 고객 조회 후 반환
+      if (error.code === '23505') {
+        const { data: existingCustomer } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('name', parsed.data.name)
+          .eq('phone', parsed.data.phone || '')
+          .single();
+        if (existingCustomer) {
+          return { data: existingCustomer };
+        }
+      }
       return { error: `고객 생성 실패: ${error.message}` };
     }
 

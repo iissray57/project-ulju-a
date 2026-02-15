@@ -34,6 +34,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      closet_component_presets: {
+        Row: {
+          category: Database["public"]["Enums"]["product_category"]
+          created_at: string | null
+          id: string
+          is_system: boolean | null
+          name: string
+          preset_data: Json
+          thumbnail_url: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["product_category"]
+          created_at?: string | null
+          id?: string
+          is_system?: boolean | null
+          name: string
+          preset_data: Json
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["product_category"]
+          created_at?: string | null
+          id?: string
+          is_system?: boolean | null
+          name?: string
+          preset_data?: Json
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      closet_models: {
+        Row: {
+          created_at: string | null
+          id: string
+          model_data: Json
+          name: string
+          order_id: string | null
+          thumbnail_url: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          model_data?: Json
+          name?: string
+          order_id?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          model_data?: Json
+          name?: string
+          order_id?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "closet_models_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cost_records: {
         Row: {
           confirmed_amount: number
@@ -599,48 +676,6 @@ export type Database = {
           },
         ]
       }
-      suppliers: {
-        Row: {
-          address: string | null
-          business_number: string | null
-          contact_person: string | null
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          memo: string | null
-          name: string
-          phone: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          address?: string | null
-          business_number?: string | null
-          contact_person?: string | null
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          memo?: string | null
-          name: string
-          phone?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Update: {
-          address?: string | null
-          business_number?: string | null
-          contact_person?: string | null
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          memo?: string | null
-          name?: string
-          phone?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       report_templates: {
         Row: {
           created_at: string | null
@@ -771,11 +806,57 @@ export type Database = {
           },
         ]
       }
+      suppliers: {
+        Row: {
+          address: string | null
+          business_number: string | null
+          contact_person: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          memo: string | null
+          name: string
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          business_number?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          memo?: string | null
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          business_number?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          memo?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      adjust_inventory: {
+        Args: { p_memo?: string; p_new_quantity: number; p_product_id: string }
+        Returns: Json
+      }
       cancel_order_cascade: {
         Args: { p_order_id: string; p_reason?: string }
         Returns: Json
@@ -788,6 +869,10 @@ export type Database = {
       generate_po_number: { Args: never; Returns: string }
       hold_materials_for_order: {
         Args: { p_mode?: string; p_order_id: string }
+        Returns: Json
+      }
+      receive_purchase_order: {
+        Args: { p_items?: Json; p_purchase_order_id: string }
         Returns: Json
       }
       release_held_materials: { Args: { p_order_id: string }; Returns: Json }
@@ -808,17 +893,17 @@ export type Database = {
       product_category:
         | "angle_frame"
         | "system_frame"
-        | "top_panel"
         | "shelf"
         | "hanger_bar"
         | "drawer"
-        | "mirror"
         | "door"
-        | "lighting"
-        | "tray"
         | "hardware"
         | "accessory"
         | "etc"
+        | "top_panel"
+        | "mirror"
+        | "lighting"
+        | "tray"
       schedule_type:
         | "measurement"
         | "installation"
@@ -984,6 +1069,10 @@ export const Constants = {
         "hardware",
         "accessory",
         "etc",
+        "top_panel",
+        "mirror",
+        "lighting",
+        "tray",
       ],
       schedule_type: [
         "measurement",

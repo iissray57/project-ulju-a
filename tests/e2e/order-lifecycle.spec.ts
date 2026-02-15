@@ -71,23 +71,28 @@ test.describe('Login Page Rendering', () => {
 
   test('로그인 ↔ 회원가입 토글이 동작함', async ({ page }) => {
     await page.goto('/login');
+    await page.waitForLoadState('networkidle');
 
     // Initially shows login
     await expect(page.locator('h1')).toContainText('로그인');
     await expect(page.locator('button[type="submit"]')).toContainText('로그인');
 
     // Click toggle to signup
-    await page.locator('button:has-text("계정이 없으신가요?")').click();
+    const toggleToSignup = page.locator('button.text-blue-600:has-text("회원가입")');
+    await toggleToSignup.waitFor({ state: 'visible' });
+    await toggleToSignup.click();
 
     // Should now show signup
-    await expect(page.locator('h1')).toContainText('회원가입');
+    await expect(page.locator('h1')).toContainText('회원가입', { timeout: 3000 });
     await expect(page.locator('button[type="submit"]')).toContainText('회원가입');
 
     // Click toggle back to login
-    await page.locator('button:has-text("이미 계정이 있으신가요?")').click();
+    const toggleToLogin = page.locator('button.text-blue-600:has-text("로그인")');
+    await toggleToLogin.waitFor({ state: 'visible' });
+    await toggleToLogin.click();
 
     // Should be back to login
-    await expect(page.locator('h1')).toContainText('로그인');
+    await expect(page.locator('h1')).toContainText('로그인', { timeout: 3000 });
     await expect(page.locator('button[type="submit"]')).toContainText('로그인');
   });
 

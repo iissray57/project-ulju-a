@@ -189,10 +189,13 @@ test.describe('Login Page Form Interaction', () => {
 
   test('회원가입 폼으로 전환 후 입력', async ({ page }) => {
     await page.goto('/login');
+    await page.waitForLoadState('networkidle');
 
     // Toggle to signup
-    await page.locator('button:has-text("계정이 없으신가요?")').click();
-    await expect(page.locator('h1')).toContainText('회원가입');
+    const toggleBtn = page.locator('button.text-blue-600:has-text("회원가입")');
+    await toggleBtn.waitFor({ state: 'visible' });
+    await toggleBtn.click();
+    await expect(page.locator('h1')).toContainText('회원가입', { timeout: 3000 });
 
     // Fill in signup form
     await page.locator('input[name="email"]').fill('newuser@example.com');
@@ -208,12 +211,19 @@ test.describe('Login Page Form Interaction', () => {
 
   test('로그인/회원가입 전환 시 에러 메시지 초기화', async ({ page }) => {
     await page.goto('/login');
+    await page.waitForLoadState('networkidle');
 
     // Toggle to signup
-    await page.locator('button:has-text("계정이 없으신가요?")').click();
+    const toggleToSignup = page.locator('button.text-blue-600:has-text("회원가입")');
+    await toggleToSignup.waitFor({ state: 'visible' });
+    await toggleToSignup.click();
+    await expect(page.locator('h1')).toContainText('회원가입', { timeout: 3000 });
 
     // Toggle back to login
-    await page.locator('button:has-text("이미 계정이 있으신가요?")').click();
+    const toggleToLogin = page.locator('button.text-blue-600:has-text("로그인")');
+    await toggleToLogin.waitFor({ state: 'visible' });
+    await toggleToLogin.click();
+    await expect(page.locator('h1')).toContainText('로그인', { timeout: 3000 });
 
     // Error message should not be visible (initially)
     const errorDiv = page.locator('.bg-red-50');

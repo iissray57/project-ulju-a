@@ -164,8 +164,12 @@ export async function createPurchaseOrder(
     const insertData: PurchaseOrderInsert = {
       user_id: user.id,
       po_number: poNumber,
+      supplier_id: parsed.data.supplier_id ?? null,
       supplier_name: parsed.data.supplier_name ?? null,
       supplier_phone: parsed.data.supplier_phone ?? null,
+      order_date: parsed.data.order_date ?? null,
+      subtotal_amount: parsed.data.subtotal_amount ?? null,
+      discount_rate: parsed.data.discount_rate ?? null,
       total_amount: parsed.data.total_amount,
       payment_date: parsed.data.payment_date ?? null,
       memo: parsed.data.memo ?? null,
@@ -216,11 +220,23 @@ export async function updatePurchaseOrder(
 
     // UPDATE
     const updateData: PurchaseOrderUpdate = {
+      ...(parsed.data.supplier_id !== undefined && {
+        supplier_id: parsed.data.supplier_id ?? null,
+      }),
       ...(parsed.data.supplier_name !== undefined && {
         supplier_name: parsed.data.supplier_name ?? null,
       }),
       ...(parsed.data.supplier_phone !== undefined && {
         supplier_phone: parsed.data.supplier_phone ?? null,
+      }),
+      ...(parsed.data.order_date !== undefined && {
+        order_date: parsed.data.order_date ?? null,
+      }),
+      ...(parsed.data.subtotal_amount !== undefined && {
+        subtotal_amount: parsed.data.subtotal_amount ?? null,
+      }),
+      ...(parsed.data.discount_rate !== undefined && {
+        discount_rate: parsed.data.discount_rate ?? null,
       }),
       ...(parsed.data.total_amount !== undefined && {
         total_amount: parsed.data.total_amount,

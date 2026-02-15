@@ -2,10 +2,14 @@ import { z } from 'zod';
 
 // 발주 생성/수정 폼 스키마
 export const purchaseOrderFormSchema = z.object({
-  supplier_name: z.string().min(1, '공급업체명을 입력해주세요').optional(),
+  supplier_id: z.string().uuid().optional(),           // 거래처 ID
+  supplier_name: z.string().min(1, '거래처명을 입력해주세요').optional(),
   supplier_phone: z.string().optional(),
-  total_amount: z.number().nonnegative(),
-  payment_date: z.string().optional(), // ISO date string
+  order_date: z.string().optional(),                   // 발주일 (ISO date)
+  subtotal_amount: z.number().nonnegative().optional(), // 할인 전 금액
+  discount_rate: z.number().min(0).max(100).optional(), // 할인율 (%)
+  total_amount: z.number().nonnegative(),              // 최종 금액
+  payment_date: z.string().optional(),                 // 결제 예정일
   memo: z.string().optional(),
 });
 

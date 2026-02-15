@@ -19,7 +19,7 @@ export function ReallocationAlert({ alerts }: ReallocationAlertProps) {
         재할당 알림
       </h3>
       <p className="mb-4 text-sm text-blue-800 dark:text-blue-400">
-        입고된 품목이 부족한 수주에 사용될 수 있습니다:
+        입고된 품목이 부족한 주문에 사용될 수 있습니다:
       </p>
       <ul className="space-y-2">
         {alerts.map((alert, index) => (
@@ -29,7 +29,7 @@ export function ReallocationAlert({ alerts }: ReallocationAlertProps) {
           >
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                수주: {alert.order_number}
+                주문: {alert.order_number}
               </p>
               <p className="text-xs text-gray-600 dark:text-gray-400">
                 {alert.product_name} - 부족 수량: {alert.shortage_quantity}
@@ -37,7 +37,7 @@ export function ReallocationAlert({ alerts }: ReallocationAlertProps) {
             </div>
             <Link href={`/orders/${alert.order_id}`}>
               <Button variant="outline" size="sm">
-                수주 보기
+                주문 보기
               </Button>
             </Link>
           </li>

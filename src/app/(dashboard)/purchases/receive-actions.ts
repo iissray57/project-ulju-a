@@ -73,7 +73,7 @@ export async function receivePurchaseOrder(
 
 /**
  * 입고 완료 후 재할당 알림 조회
- * productIds에 해당하는 shortage_quantity > 0인 수주 목록 반환
+ * productIds에 해당하는 shortage_quantity > 0인 주문 목록 반환
  */
 export async function getReallocationAlerts(
   productIds: string[]

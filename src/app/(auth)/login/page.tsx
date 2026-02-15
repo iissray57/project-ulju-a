@@ -16,14 +16,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6 text-center">
+    <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-white">
         {isSignUp ? '회원가입' : '로그인'}
       </h1>
 
       <form action={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium mb-2">
+          <label htmlFor="email" className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
             이메일
           </label>
           <input
@@ -31,13 +31,13 @@ export default function LoginPage() {
             name="email"
             type="email"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             placeholder="your@email.com"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium mb-2">
+          <label htmlFor="password" className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
             비밀번호
           </label>
           <input
@@ -45,7 +45,7 @@ export default function LoginPage() {
             name="password"
             type="password"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             placeholder="••••••••"
           />
         </div>

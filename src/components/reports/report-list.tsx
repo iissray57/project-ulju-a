@@ -156,7 +156,7 @@ export function ReportList({ reports }: ReportListProps) {
 
                 <CardContent className="flex-1 space-y-2">
                   <div>
-                    <p className="text-sm font-medium">수주번호</p>
+                    <p className="text-sm font-medium">주문번호</p>
                     <p className="text-sm text-muted-foreground">
                       {report.order_id || '미지정'}
                     </p>

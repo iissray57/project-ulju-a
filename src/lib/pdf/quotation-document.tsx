@@ -100,10 +100,10 @@ export function generateQuotationDocument(data: QuotationData) {
 
       React.createElement(PDFDivider, null),
 
-      // 수주 정보 섹션
+      // 주문 정보 섹션
       React.createElement(
         PDFSection,
-        { title: '수주 정보' },
+        { title: '주문 정보' },
         React.createElement(PDFRow, {
           label: '견적번호',
           value: order.order_number,

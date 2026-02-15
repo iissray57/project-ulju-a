@@ -52,7 +52,7 @@ export function createChecklistDocument(data: ChecklistPDFData) {
       // Header
       React.createElement(PDFHeader, {
         title: '체크리스트 점검 결과',
-        subtitle: `수주번호: ${data.order.order_number}`,
+        subtitle: `주문번호: ${data.order.order_number}`,
         date: `발행일: ${issueDate}`,
       }),
 

@@ -56,7 +56,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
       {children}
-      <Toaster />
+      <Toaster resolvedTheme={resolvedTheme} />
     </ThemeContext.Provider>
   );
 }

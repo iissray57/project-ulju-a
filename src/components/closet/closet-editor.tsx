@@ -70,7 +70,7 @@ function ModelSaveBar({ orderId }: { orderId?: string }) {
 
   const handleSave = async () => {
     if (!orderId) {
-      toast.error('수주가 선택되지 않았습니다.');
+      toast.error('주문이 선택되지 않았습니다.');
       return;
     }
 
@@ -104,7 +104,7 @@ function ModelSaveBar({ orderId }: { orderId?: string }) {
       ) : orderId ? (
         <>
           <span className="text-xs text-muted-foreground">
-            수주: {orderId.slice(0, 8)}...
+            주문: {orderId.slice(0, 8)}...
           </span>
           <Button
             size="sm"
@@ -123,7 +123,7 @@ function ModelSaveBar({ orderId }: { orderId?: string }) {
         </>
       ) : (
         <span className="text-xs text-muted-foreground">
-          수주를 선택하면 모델을 저장할 수 있습니다
+          주문을 선택하면 모델을 저장할 수 있습니다
         </span>
       )}
     </div>

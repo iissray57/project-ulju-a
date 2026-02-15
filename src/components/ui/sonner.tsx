@@ -7,12 +7,13 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react"
-import { useTheme } from "@/components/providers/theme-provider"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { resolvedTheme } = useTheme()
+interface CustomToasterProps extends Omit<ToasterProps, 'theme'> {
+  resolvedTheme?: 'light' | 'dark';
+}
 
+const Toaster = ({ resolvedTheme = 'dark', ...props }: CustomToasterProps) => {
   return (
     <Sonner
       theme={resolvedTheme as ToasterProps["theme"]}

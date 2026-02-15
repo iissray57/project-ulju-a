@@ -15,6 +15,8 @@ import {
   ChevronRight,
   Box,
   PencilRuler,
+  Users,
+  Boxes,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -22,8 +24,10 @@ import { Separator } from '@/components/ui/separator';
 
 const navItems = [
   { href: '/', label: '대시보드', icon: Home },
-  { href: '/orders', label: '수주관리', icon: ClipboardList },
+  { href: '/customers', label: '고객관리', icon: Users },
+  { href: '/orders', label: '주문관리', icon: ClipboardList },
   { href: '/schedule', label: '스케줄', icon: Calendar },
+  { href: '/products', label: '품목관리', icon: Boxes },
   { href: '/inventory', label: '재고관리', icon: Package },
   { href: '/purchases', label: '발주관리', icon: ShoppingCart },
   { href: '/finance', label: '매출/매입', icon: DollarSign },

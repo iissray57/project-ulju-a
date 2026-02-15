@@ -49,7 +49,7 @@ export async function OrderPipelineSummary() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
-          수주 파이프라인
+          주문 파이프라인
         </CardTitle>
         <CardAction>
           <Link
@@ -62,7 +62,7 @@ export async function OrderPipelineSummary() {
       </CardHeader>
       <CardContent>
         {activeStatusCounts.length === 0 && (
-          <p className="text-sm text-muted-foreground py-4">진행 중인 수주가 없습니다</p>
+          <p className="text-sm text-muted-foreground py-4">진행 중인 주문이 없습니다</p>
         )}
         {activeStatusCounts.length > 0 && (
           <div className="space-y-3">

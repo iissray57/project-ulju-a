@@ -28,7 +28,7 @@ export function QuickActionBar() {
           <QuickActionButton
             href="/orders/new"
             icon={<Plus className="h-5 w-5" />}
-            label="신규 수주 등록"
+            label="신규 주문 등록"
           />
           <QuickActionButton
             href="/customers/new"

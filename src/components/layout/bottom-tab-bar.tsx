@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 const tabs = [
   { href: '/', label: '홈', icon: Home },
-  { href: '/orders', label: '수주', icon: ClipboardList },
+  { href: '/orders', label: '주문', icon: ClipboardList },
   { href: '#add', label: '', icon: Plus, isFab: true },
   { href: '/inventory', label: '재고', icon: Package },
   { href: '/settings', label: '설정', icon: Settings },

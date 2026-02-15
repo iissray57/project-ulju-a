@@ -63,11 +63,13 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: quotationResult.error }, { status: 400 });
       }
 
+      // 한글 파일명 UTF-8 인코딩 처리
+      const encodedFilename = encodeURIComponent(quotationResult.filename);
       return new NextResponse(quotationResult.buffer as BodyInit, {
         status: 200,
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${quotationResult.filename}"`,
+          'Content-Disposition': `attachment; filename*=UTF-8''${encodedFilename}`,
         },
       });
     }
@@ -80,11 +82,13 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: checklistResult.error }, { status: 400 });
       }
 
+      // 한글 파일명 UTF-8 인코딩 처리
+      const encodedChecklistFilename = encodeURIComponent(checklistResult.filename);
       return new NextResponse(checklistResult.buffer as BodyInit, {
         status: 200,
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${checklistResult.filename}"`,
+          'Content-Disposition': `attachment; filename*=UTF-8''${encodedChecklistFilename}`,
         },
       });
     }
@@ -92,7 +96,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid type or missing parameters' }, { status: 400 });
   } catch (error) {
     console.error('PDF generation error:', error);
-    return NextResponse.json({ error: 'PDF generation failed' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.error('Error details:', { message: errorMessage, stack: errorStack });
+    return NextResponse.json({ error: `PDF generation failed: ${errorMessage}` }, { status: 500 });
   }
 }
 
@@ -100,7 +107,7 @@ export async function GET(request: NextRequest) {
  * 견적서 PDF 생성
  * @param supabase - Supabase client
  * @param userId - 사용자 ID
- * @param orderId - 수주 ID
+ * @param orderId - 주문 ID
  * @returns { buffer, filename } 또는 { error }
  */
 async function generateQuotationPDF(
@@ -109,7 +116,7 @@ async function generateQuotationPDF(
   orderId: string
 ): Promise<{ buffer: Buffer; filename: string } | { error: string }> {
   try {
-    // 수주 + 고객 정보 조회
+    // 주문 + 고객 정보 조회 (RLS가 user_id 필터링 처리)
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .select(
@@ -117,20 +124,20 @@ async function generateQuotationPDF(
         id,
         order_number,
         status,
-        total_amount,
+        quotation_amount,
+        confirmed_amount,
         installation_date,
-        notes,
+        memo,
         created_at,
         customer:customers(name, phone, address)
       `
       )
       .eq('id', orderId)
-      .eq('user_id', userId)
       .single();
 
     if (orderError || !orderData) {
-      console.error('[generateQuotationPDF] Order fetch error:', orderError);
-      return { error: '수주를 찾을 수 없습니다.' };
+      console.error('[generateQuotationPDF] Order fetch error:', orderError, 'orderId:', orderId, 'userId:', userId);
+      return { error: '주문을 찾을 수 없습니다. 권한이 없거나 존재하지 않는 주문입니다.' };
     }
 
     // customer가 배열로 반환되므로 첫 번째 요소 사용
@@ -142,20 +149,37 @@ async function generateQuotationPDF(
       return { error: '고객 정보를 찾을 수 없습니다.' };
     }
 
-    // Type assertion after runtime check
-    const customer = customerData as { name: string; phone: string; address: string };
+    // Type assertion after runtime check with null safety
+    const customer = {
+      name: (customerData as Record<string, unknown>).name as string || '(이름 없음)',
+      phone: (customerData as Record<string, unknown>).phone as string || '',
+      address: (customerData as Record<string, unknown>).address as string || null,
+    };
 
-    // 자재 목록 조회
+    // 자재 목록 조회 (order_materials에 created_at 없음)
     const { data: materialsData, error: materialsError } = await supabase
       .from('order_materials')
-      .select('product_name, quantity, unit_price, subtotal, memo')
-      .eq('order_id', orderId)
-      .order('created_at', { ascending: true });
+      .select('id, product_id, planned_quantity, used_quantity, memo, product:products(name, unit_price)')
+      .eq('order_id', orderId);
 
     if (materialsError) {
       console.error('[generateQuotationPDF] Materials fetch error:', materialsError);
       return { error: '자재 목록 조회에 실패했습니다.' };
     }
+
+    // 자재 데이터를 QuotationData 형식으로 변환
+    const materials = (materialsData || []).map((m) => {
+      const product = Array.isArray(m.product) ? m.product[0] : m.product;
+      const unitPrice = product?.unit_price || 0;
+      const quantity = m.planned_quantity || 0;
+      return {
+        product_name: product?.name || '(제품 없음)',
+        quantity,
+        unit_price: unitPrice,
+        subtotal: unitPrice * quantity,
+        memo: m.memo,
+      };
+    });
 
     // QuotationData 구성
     const quotationData: QuotationData = {
@@ -163,9 +187,9 @@ async function generateQuotationPDF(
         id: orderData.id,
         order_number: orderData.order_number,
         status: orderData.status,
-        total_amount: orderData.total_amount,
+        total_amount: orderData.confirmed_amount || orderData.quotation_amount || 0,
         installation_date: orderData.installation_date,
-        notes: orderData.notes,
+        notes: orderData.memo,
         created_at: orderData.created_at,
       },
       customer: {
@@ -173,7 +197,7 @@ async function generateQuotationPDF(
         phone: customer.phone,
         address: customer.address,
       },
-      materials: materialsData || [],
+      materials,
     };
 
     // PDF 문서 생성
@@ -289,7 +313,7 @@ async function generateTestPDF() {
  * 체크리스트 PDF 생성
  * @param supabase - Supabase client
  * @param userId - 사용자 ID
- * @param orderId - 수주 ID
+ * @param orderId - 주문 ID
  * @returns { buffer, filename } 또는 { error }
  */
 async function generateChecklistPDF(
@@ -298,7 +322,7 @@ async function generateChecklistPDF(
   orderId: string
 ): Promise<{ buffer: Buffer; filename: string } | { error: string }> {
   try {
-    // 수주 + 고객 + 체크리스트 조회
+    // 주문 + 고객 + 체크리스트 조회 (RLS가 user_id 필터링 처리)
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .select(
@@ -313,12 +337,11 @@ async function generateChecklistPDF(
       `
       )
       .eq('id', orderId)
-      .eq('user_id', userId)
       .single();
 
     if (orderError || !orderData) {
-      console.error('[generateChecklistPDF] Order fetch error:', orderError);
-      return { error: '수주를 찾을 수 없습니다.' };
+      console.error('[generateChecklistPDF] Order fetch error:', orderError, 'orderId:', orderId, 'userId:', userId);
+      return { error: '주문을 찾을 수 없습니다. 권한이 없거나 존재하지 않는 주문입니다.' };
     }
 
     // 체크리스트 데이터 (없으면 기본값 사용)

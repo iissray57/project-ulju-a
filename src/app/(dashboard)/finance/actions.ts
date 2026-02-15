@@ -171,7 +171,7 @@ export async function deleteRevenueRecord(id: string): Promise<ActionResult<void
 }
 
 /**
- * 특정 수주의 매출 이력 조회
+ * 특정 주문의 매출 이력 조회
  */
 export async function getRevenueByOrder(
   orderId: string
@@ -201,7 +201,7 @@ export async function getRevenueByOrder(
     return { data: data ?? [] };
   } catch (err) {
     console.error('[getRevenueByOrder] Unexpected error:', err);
-    return { error: '수주별 매출 이력 조회 중 오류가 발생했습니다.' };
+    return { error: '주문별 매출 이력 조회 중 오류가 발생했습니다.' };
   }
 }
 

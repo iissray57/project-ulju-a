@@ -432,7 +432,10 @@ export type Database = {
       products: {
         Row: {
           category: Database["public"]["Enums"]["product_category"]
+          color: string | null
           created_at: string | null
+          depth: number | null
+          height: number | null
           id: string
           is_active: boolean | null
           memo: string | null
@@ -443,10 +446,14 @@ export type Database = {
           unit_price: number | null
           updated_at: string | null
           user_id: string
+          width: number | null
         }
         Insert: {
           category: Database["public"]["Enums"]["product_category"]
+          color?: string | null
           created_at?: string | null
+          depth?: number | null
+          height?: number | null
           id?: string
           is_active?: boolean | null
           memo?: string | null
@@ -457,10 +464,14 @@ export type Database = {
           unit_price?: number | null
           updated_at?: string | null
           user_id?: string
+          width?: number | null
         }
         Update: {
           category?: Database["public"]["Enums"]["product_category"]
+          color?: string | null
           created_at?: string | null
+          depth?: number | null
+          height?: number | null
           id?: string
           is_active?: boolean | null
           memo?: string | null
@@ -471,6 +482,7 @@ export type Database = {
           unit_price?: number | null
           updated_at?: string | null
           user_id?: string
+          width?: number | null
         }
         Relationships: []
       }
@@ -528,11 +540,15 @@ export type Database = {
       purchase_orders: {
         Row: {
           created_at: string | null
+          discount_rate: number | null
           id: string
           memo: string | null
+          order_date: string | null
           payment_date: string | null
           po_number: string
           status: Database["public"]["Enums"]["po_status"] | null
+          subtotal_amount: number | null
+          supplier_id: string | null
           supplier_name: string | null
           supplier_phone: string | null
           total_amount: number | null
@@ -541,11 +557,15 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          discount_rate?: number | null
           id?: string
           memo?: string | null
+          order_date?: string | null
           payment_date?: string | null
           po_number: string
           status?: Database["public"]["Enums"]["po_status"] | null
+          subtotal_amount?: number | null
+          supplier_id?: string | null
           supplier_name?: string | null
           supplier_phone?: string | null
           total_amount?: number | null
@@ -554,14 +574,68 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          discount_rate?: number | null
           id?: string
           memo?: string | null
+          order_date?: string | null
           payment_date?: string | null
           po_number?: string
           status?: Database["public"]["Enums"]["po_status"] | null
+          subtotal_amount?: number | null
+          supplier_id?: string | null
           supplier_name?: string | null
           supplier_phone?: string | null
           total_amount?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          business_number: string | null
+          contact_person: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          memo: string | null
+          name: string
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          business_number?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          memo?: string | null
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          address?: string | null
+          business_number?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          memo?: string | null
+          name?: string
+          phone?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -734,10 +808,14 @@ export type Database = {
       product_category:
         | "angle_frame"
         | "system_frame"
+        | "top_panel"
         | "shelf"
         | "hanger_bar"
         | "drawer"
+        | "mirror"
         | "door"
+        | "lighting"
+        | "tray"
         | "hardware"
         | "accessory"
         | "etc"

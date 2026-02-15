@@ -8,6 +8,7 @@ import { OrderDetailSections } from '@/components/orders/order-detail-sections';
 // import { OrderSchedules } from '@/components/orders/order-schedules';
 import { OrderMaterialsTable } from '@/components/orders/order-materials-table';
 import { OrderChecklist } from '@/components/orders/order-checklist';
+import { OrderModels } from '@/components/orders/order-models';
 import { getOrderChecklist } from '../checklist-actions';
 import { QuotationDownloadButton } from '@/components/orders/quotation-download-button';
 import { LEGACY_STATUS_MAP, type OrderStatus } from '@/lib/schemas/order-status';
@@ -76,6 +77,11 @@ export default async function OrderDetailPage({ params }: PageProps) {
           installationItems={checklists.installation}
         />
       )}
+
+      {/* 모델링 */}
+      <OrderModels orderId={id} />
+
+      <Separator />
 
       {/* 자재 현황 */}
       <OrderMaterialsTable orderId={id} />

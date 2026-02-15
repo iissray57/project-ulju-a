@@ -67,9 +67,18 @@ export async function getOrders(
       )
       .eq('user_id', user.id);
 
-    // 상태 필터
+    // 상태 필터 (UI 상태를 DB enum으로 매핑)
     if (status) {
-      query = query.eq('status', status);
+      const dbStatus = STATUS_TO_DB[status as NewOrderStatus] || status;
+      // 여러 DB enum이 같은 UI 상태로 매핑되는 경우 처리
+      const reverseMatches = Object.entries(LEGACY_STATUS_MAP)
+        .filter(([, v]) => v === (status as NewOrderStatus))
+        .map(([k]) => k);
+      if (reverseMatches.length > 1) {
+        query = query.in('status', reverseMatches);
+      } else {
+        query = query.eq('status', dbStatus);
+      }
     }
 
     // 검색: order_number 또는 customer name

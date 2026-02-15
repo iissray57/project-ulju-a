@@ -891,19 +891,15 @@ export type Database = {
         | "cancelled"
       po_status: "draft" | "ordered" | "received" | "settled" | "cost_confirmed"
       product_category:
-        | "angle_frame"
+        | "angle"
+        | "plywood"
+        | "raw_sheet"
         | "system_frame"
-        | "shelf"
-        | "hanger_bar"
-        | "drawer"
-        | "door"
-        | "hardware"
-        | "accessory"
-        | "etc"
         | "top_panel"
-        | "mirror"
-        | "lighting"
-        | "tray"
+        | "drawer"
+        | "mirror_cabinet"
+        | "blind"
+        | "curtain"
       schedule_type:
         | "measurement"
         | "installation"
@@ -1060,19 +1056,15 @@ export const Constants = {
       ],
       po_status: ["draft", "ordered", "received", "settled", "cost_confirmed"],
       product_category: [
-        "angle_frame",
+        "angle",
+        "plywood",
+        "raw_sheet",
         "system_frame",
-        "shelf",
-        "hanger_bar",
-        "drawer",
-        "door",
-        "hardware",
-        "accessory",
-        "etc",
         "top_panel",
-        "mirror",
-        "lighting",
-        "tray",
+        "drawer",
+        "mirror_cabinet",
+        "blind",
+        "curtain",
       ],
       schedule_type: [
         "measurement",

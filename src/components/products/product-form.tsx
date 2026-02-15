@@ -6,11 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   productFormSchema,
   type ProductFormData,
-  PRODUCT_CATEGORIES,
   PRODUCT_CATEGORY_LABELS,
+  PRODUCT_MAIN_CATEGORY_LABELS,
+  MAIN_TO_CATEGORIES,
   FRAME_COLORS,
   PANEL_COLORS,
-  DRAWER_COLORS,
+  type ProductMainCategory,
 } from '@/lib/schemas/product';
 import { createProduct, updateProduct } from '@/app/(dashboard)/products/actions';
 import { Button } from '@/components/ui/button';
@@ -104,10 +105,17 @@ export function ProductForm({ productId, defaultValues, onSuccess, onCancel }: P
             <SelectValue placeholder="카테고리 선택" />
           </SelectTrigger>
           <SelectContent>
-            {PRODUCT_CATEGORIES.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {PRODUCT_CATEGORY_LABELS[cat]}
-              </SelectItem>
+            {(Object.keys(MAIN_TO_CATEGORIES) as ProductMainCategory[]).map((main) => (
+              <div key={main}>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  {PRODUCT_MAIN_CATEGORY_LABELS[main]}
+                </div>
+                {MAIN_TO_CATEGORIES[main].map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {PRODUCT_CATEGORY_LABELS[cat]}
+                  </SelectItem>
+                ))}
+              </div>
             ))}
           </SelectContent>
         </Select>
@@ -204,26 +212,20 @@ export function ProductForm({ productId, defaultValues, onSuccess, onCancel }: P
             <SelectValue placeholder="색상 선택" />
           </SelectTrigger>
           <SelectContent>
-            {selectedCategory === 'angle_frame' || selectedCategory === 'system_frame' ? (
+            {selectedCategory === 'system_frame' ? (
               FRAME_COLORS.map((color) => (
                 <SelectItem key={color} value={color}>
                   {color}
                 </SelectItem>
               ))
-            ) : selectedCategory === 'drawer' ? (
-              DRAWER_COLORS.map((color) => (
-                <SelectItem key={color} value={color}>
-                  {color}
-                </SelectItem>
-              ))
-            ) : selectedCategory === 'top_panel' || selectedCategory === 'shelf' ? (
+            ) : selectedCategory === 'top_panel' ? (
               PANEL_COLORS.map((color) => (
                 <SelectItem key={color} value={color}>
                   {color}
                 </SelectItem>
               ))
             ) : (
-              [...FRAME_COLORS, ...PANEL_COLORS, ...DRAWER_COLORS]
+              [...FRAME_COLORS, ...PANEL_COLORS]
                 .filter((v, i, a) => a.indexOf(v) === i)
                 .map((color) => (
                   <SelectItem key={color} value={color}>

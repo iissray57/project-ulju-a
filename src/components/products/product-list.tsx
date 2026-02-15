@@ -34,13 +34,20 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   PRODUCT_CATEGORIES,
   PRODUCT_CATEGORY_LABELS,
+  PRODUCT_MAIN_CATEGORIES,
+  PRODUCT_MAIN_CATEGORY_LABELS,
+  MAIN_TO_CATEGORIES,
+  CATEGORY_TO_MAIN,
   type ProductCategory,
+  type ProductMainCategory,
   type ProductFormData,
 } from '@/lib/schemas/product';
 import { deleteProduct, getProduct } from '@/app/(dashboard)/products/actions';
 import { ProductForm } from './product-form';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { ExportButton } from '@/components/ui/export-button';
+import type { ExportColumn } from '@/lib/utils/export';
 import type { Database } from '@/lib/database.types';
 
 type ProductRow = Database['public']['Tables']['products']['Row'];
@@ -50,8 +57,18 @@ interface ProductListProps {
   total: number;
 }
 
+const PRODUCT_EXPORT_COLUMNS: ExportColumn<ProductRow>[] = [
+  { header: '카테고리', accessor: (r) => PRODUCT_CATEGORY_LABELS[r.category as ProductCategory] },
+  { header: '품목명', accessor: (r) => r.name },
+  { header: 'SKU', accessor: (r) => r.sku },
+  { header: '단위', accessor: (r) => r.unit || 'EA' },
+  { header: '단가', accessor: (r) => r.unit_price },
+  { header: '최소재고', accessor: (r) => r.min_stock },
+];
+
 export function ProductList({ products, total }: ProductListProps) {
   const router = useRouter();
+  const [selectedMain, setSelectedMain] = useState<ProductMainCategory | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -65,7 +82,13 @@ export function ProductList({ products, total }: ProductListProps) {
   const filteredProducts = useMemo(() => {
     let filtered = products;
 
-    // Category filter
+    // Main category filter
+    if (selectedMain) {
+      const subCategories = MAIN_TO_CATEGORIES[selectedMain];
+      filtered = filtered.filter((p) => subCategories.includes(p.category as ProductCategory));
+    }
+
+    // Sub-category filter
     if (selectedCategory) {
       filtered = filtered.filter((p) => p.category === selectedCategory);
     }
@@ -165,34 +188,60 @@ export function ProductList({ products, total }: ProductListProps) {
             재고 관리에 사용되는 품목(제품)을 등록하고 관리합니다
           </p>
         </div>
-        <Button onClick={handleOpenNew}>
-          <Plus className="h-4 w-4" />
-          품목 등록
-        </Button>
+        <div className="flex gap-2">
+          <ExportButton data={filteredProducts} columns={PRODUCT_EXPORT_COLUMNS} filename="품목목록" sheetName="품목" />
+          <Button onClick={handleOpenNew}>
+            <Plus className="h-4 w-4" />
+            품목 등록
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
       <div className="space-y-3">
-        {/* Category chips */}
+        {/* Main category chips */}
         <div className="flex flex-wrap gap-2">
           <Button
-            variant={selectedCategory === null ? 'default' : 'outline'}
+            variant={selectedMain === null ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setSelectedCategory(null)}
+            onClick={() => { setSelectedMain(null); setSelectedCategory(null); }}
           >
             전체
           </Button>
-          {PRODUCT_CATEGORIES.map((category) => (
+          {PRODUCT_MAIN_CATEGORIES.map((main) => (
             <Button
-              key={category}
-              variant={selectedCategory === category ? 'default' : 'outline'}
+              key={main}
+              variant={selectedMain === main ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => { setSelectedMain(main); setSelectedCategory(null); }}
             >
-              {PRODUCT_CATEGORY_LABELS[category]}
+              {PRODUCT_MAIN_CATEGORY_LABELS[main]}
             </Button>
           ))}
         </div>
+
+        {/* Sub-category chips (대분류 선택 시) */}
+        {selectedMain && (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={selectedCategory === null ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setSelectedCategory(null)}
+            >
+              전체
+            </Button>
+            {MAIN_TO_CATEGORIES[selectedMain].map((cat) => (
+              <Button
+                key={cat}
+                variant={selectedCategory === cat ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setSelectedCategory(cat)}
+              >
+                {PRODUCT_CATEGORY_LABELS[cat]}
+              </Button>
+            ))}
+          </div>
+        )}
 
         {/* Search */}
         <Input

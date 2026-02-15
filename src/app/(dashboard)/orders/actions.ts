@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import type { Database, TablesInsert, TablesUpdate } from '@/lib/database.types';
 import { orderFormSchema, type OrderFormData } from '@/lib/schemas/order';
-import { canTransition, LEGACY_STATUS_MAP, type OrderStatus as NewOrderStatus } from '@/lib/schemas/order-status';
+import { canTransition, LEGACY_STATUS_MAP, STATUS_TO_DB, type OrderStatus as NewOrderStatus } from '@/lib/schemas/order-status';
 import { syncOrderSchedule, syncOrderDateChange } from '@/lib/utils/order-schedule-sync';
 import { revalidatePath } from 'next/cache';
 
@@ -419,7 +419,7 @@ export async function transitionOrderStatus(
       const { error: updateError } = await supabase
         .from('orders')
         .update({
-          status: newStatus,
+          status: STATUS_TO_DB[newStatus] as any,
           updated_at: new Date().toISOString(),
         })
         .eq('id', orderId)
@@ -445,7 +445,7 @@ export async function transitionOrderStatus(
       const { error: updateError } = await supabase
         .from('orders')
         .update({
-          status: newStatus,
+          status: STATUS_TO_DB[newStatus] as any,
           updated_at: new Date().toISOString(),
         })
         .eq('id', orderId)
@@ -460,7 +460,7 @@ export async function transitionOrderStatus(
       const { error: updateError } = await supabase
         .from('orders')
         .update({
-          status: newStatus,
+          status: STATUS_TO_DB[newStatus] as any,
           updated_at: new Date().toISOString(),
         })
         .eq('id', orderId)

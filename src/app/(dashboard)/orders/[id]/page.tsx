@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { getOrder } from '../actions';
 import { OrderStatusBar } from '@/components/orders/order-status-bar';
 import { OrderDetailSections } from '@/components/orders/order-detail-sections';
-import { OrderSchedules } from '@/components/orders/order-schedules';
+// import { OrderSchedules } from '@/components/orders/order-schedules';
 import { OrderMaterialsTable } from '@/components/orders/order-materials-table';
 import { OrderChecklist } from '@/components/orders/order-checklist';
 import { getOrderChecklist } from '../checklist-actions';
@@ -80,8 +80,8 @@ export default async function OrderDetailPage({ params }: PageProps) {
       {/* 자재 현황 */}
       <OrderMaterialsTable orderId={id} />
 
-      {/* 관련 일정 */}
-      <OrderSchedules orderId={id} />
+      {/* 관련 일정 - TODO: 추후 활성화 */}
+      {/* <OrderSchedules orderId={id} /> */}
     </div>
   );
 }

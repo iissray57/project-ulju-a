@@ -59,8 +59,7 @@ export async function getOrderMaterials(
       `
       )
       .eq('order_id', orderId)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+      .eq('user_id', user.id);
 
     if (error) {
       console.error('[getOrderMaterials] Supabase error:', error);

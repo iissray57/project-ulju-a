@@ -13,7 +13,7 @@ import {
 import { useEditorDispatch, useEditorState } from './editor-context';
 import type { ClosetComponent, ShapeType } from '@/lib/types/closet-editor';
 
-// ── 프리셋 도형 데이터 ──────────────────────────
+// ── 프리셋 데이터 ──────────────────────────
 
 interface ShapePreset {
   name: string;
@@ -27,38 +27,74 @@ interface ShapePreset {
   label?: string;
 }
 
+// 프레임 타입별 색상 (배경 / 테두리)
+const FRAME_COLORS: Record<string, { bg: string; border: string }> = {
+  A: { bg: '#DBEAFE', border: '#3B82F6' },  // Blue - 선반장
+  B: { bg: '#D1FAE5', border: '#10B981' },  // Green - 행거장 (상단선반)
+  C: { bg: '#FEF3C7', border: '#F59E0B' },  // Amber - 행거장 (전체)
+  D: { bg: '#FCE7F3', border: '#EC4899' },  // Pink - 서랍형
+  E: { bg: '#E0E7FF', border: '#6366F1' },  // Indigo - 혼합형
+  F: { bg: '#F3E8FF', border: '#A855F7' },  // Purple - 특수형
+};
+
+const FRAME_WIDTHS = [600, 700, 800, 900];
+const FRAME_DEPTH = 600;
+
 const SHAPE_CATEGORIES = [
-  { value: 'basic', label: '기본 도형' },
-  { value: 'closet', label: '수납장 부품' },
+  { value: 'frame', label: '프레임 타입' },
+  { value: 'parts', label: '부속품' },
   { value: 'room', label: '공간 요소' },
 ];
 
-const SHAPE_PRESETS: ShapePreset[] = [
-  // 기본 도형
-  { name: '사각형 (소)', category: 'basic', shapeType: 'rect', width: 300, depth: 300, color: '#e2e8f0', borderColor: '#94a3b8' },
-  { name: '사각형 (중)', category: 'basic', shapeType: 'rect', width: 600, depth: 400, color: '#e2e8f0', borderColor: '#94a3b8' },
-  { name: '사각형 (대)', category: 'basic', shapeType: 'rect', width: 900, depth: 600, color: '#e2e8f0', borderColor: '#94a3b8' },
-  { name: '둥근 사각형 (소)', category: 'basic', shapeType: 'rounded-rect', width: 300, depth: 300, color: '#dbeafe', borderColor: '#60a5fa', borderRadius: 20 },
-  { name: '둥근 사각형 (중)', category: 'basic', shapeType: 'rounded-rect', width: 600, depth: 400, color: '#dbeafe', borderColor: '#60a5fa', borderRadius: 30 },
-  { name: '둥근 사각형 (대)', category: 'basic', shapeType: 'rounded-rect', width: 900, depth: 600, color: '#dbeafe', borderColor: '#60a5fa', borderRadius: 40 },
-  { name: '원형 (소)', category: 'basic', shapeType: 'circle', width: 300, depth: 300, color: '#fce7f3', borderColor: '#f472b6' },
-  { name: '원형 (중)', category: 'basic', shapeType: 'circle', width: 500, depth: 500, color: '#fce7f3', borderColor: '#f472b6' },
-  { name: '라벨', category: 'basic', shapeType: 'rounded-rect', width: 400, depth: 150, color: '#fef3c7', borderColor: '#f59e0b', borderRadius: 10, label: '라벨' },
+// 프레임 타입 A~F × 폭 600/700/800/900
+function generateFramePresets(): ShapePreset[] {
+  const types: { key: string; desc: string }[] = [
+    { key: 'A', desc: '선반장' },
+    { key: 'B', desc: '행거(상단선반)' },
+    { key: 'C', desc: '행거(전체)' },
+    { key: 'D', desc: '서랍형' },
+    { key: 'E', desc: '혼합형' },
+    { key: 'F', desc: '특수형' },
+  ];
 
-  // 수납장 부품
-  { name: '프레임 (600×400)', category: 'closet', shapeType: 'rect', width: 600, depth: 400, color: '#C0C0C0', borderColor: '#888888' },
-  { name: '프레임 (900×400)', category: 'closet', shapeType: 'rect', width: 900, depth: 400, color: '#C0C0C0', borderColor: '#888888' },
-  { name: '프레임 (1200×400)', category: 'closet', shapeType: 'rect', width: 1200, depth: 400, color: '#C0C0C0', borderColor: '#888888' },
-  { name: '선반 (600×300)', category: 'closet', shapeType: 'rect', width: 600, depth: 300, color: '#E8DCC4', borderColor: '#C4B08A' },
-  { name: '선반 (900×300)', category: 'closet', shapeType: 'rect', width: 900, depth: 300, color: '#E8DCC4', borderColor: '#C4B08A' },
-  { name: '서랍 (800×400)', category: 'closet', shapeType: 'rounded-rect', width: 800, depth: 400, color: '#F5DEB3', borderColor: '#D4A760', borderRadius: 10 },
-  { name: '행거 바 (900×50)', category: 'closet', shapeType: 'rounded-rect', width: 900, depth: 50, color: '#D1D5DB', borderColor: '#9CA3AF', borderRadius: 25 },
+  const presets: ShapePreset[] = [];
+  for (const t of types) {
+    const colors = FRAME_COLORS[t.key];
+    for (const w of FRAME_WIDTHS) {
+      presets.push({
+        name: `${t.key} ${w} (${t.desc})`,
+        category: 'frame',
+        shapeType: 'rect',
+        width: w,
+        depth: FRAME_DEPTH,
+        color: colors.bg,
+        borderColor: colors.border,
+        label: `${t.key} ${w}`,
+      });
+    }
+  }
+  return presets;
+}
+
+const SHAPE_PRESETS: ShapePreset[] = [
+  // 프레임 타입 A~F
+  ...generateFramePresets(),
+
+  // 부속품
+  { name: '선반 (600)', category: 'parts', shapeType: 'rect', width: 600, depth: 40, color: '#E8DCC4', borderColor: '#C4B08A', label: '선반' },
+  { name: '선반 (800)', category: 'parts', shapeType: 'rect', width: 800, depth: 40, color: '#E8DCC4', borderColor: '#C4B08A', label: '선반' },
+  { name: '칸막이 (세로)', category: 'parts', shapeType: 'rect', width: 20, depth: 600, color: '#D1D5DB', borderColor: '#9CA3AF', label: '칸막이' },
+  { name: '행거바 (600)', category: 'parts', shapeType: 'rounded-rect', width: 600, depth: 30, color: '#93C5FD', borderColor: '#3B82F6', borderRadius: 15, label: '행거바' },
+  { name: '행거바 (800)', category: 'parts', shapeType: 'rounded-rect', width: 800, depth: 30, color: '#93C5FD', borderColor: '#3B82F6', borderRadius: 15, label: '행거바' },
+  { name: '서랍 (600)', category: 'parts', shapeType: 'rect', width: 600, depth: 200, color: '#FDE68A', borderColor: '#D97706', label: '서랍' },
+  { name: '서랍 (800)', category: 'parts', shapeType: 'rect', width: 800, depth: 200, color: '#FDE68A', borderColor: '#D97706', label: '서랍' },
 
   // 공간 요소
-  { name: '벽면 (2000×100)', category: 'room', shapeType: 'rect', width: 2000, depth: 100, color: '#d1d5db', borderColor: '#6b7280' },
-  { name: '벽면 (3000×100)', category: 'room', shapeType: 'rect', width: 3000, depth: 100, color: '#d1d5db', borderColor: '#6b7280' },
-  { name: '기둥 (200×200)', category: 'room', shapeType: 'rect', width: 200, depth: 200, color: '#9ca3af', borderColor: '#6b7280' },
-  { name: '문 (800×100)', category: 'room', shapeType: 'rounded-rect', width: 800, depth: 100, color: '#a3e635', borderColor: '#65a30d', borderRadius: 5 },
+  { name: '벽면 (2000)', category: 'room', shapeType: 'rect', width: 2000, depth: 100, color: '#9CA3AF', borderColor: '#6B7280' },
+  { name: '벽면 (3000)', category: 'room', shapeType: 'rect', width: 3000, depth: 100, color: '#9CA3AF', borderColor: '#6B7280' },
+  { name: '벽면 (세로 2000)', category: 'room', shapeType: 'rect', width: 100, depth: 2000, color: '#9CA3AF', borderColor: '#6B7280' },
+  { name: '문 (800)', category: 'room', shapeType: 'rounded-rect', width: 800, depth: 80, color: '#A3E635', borderColor: '#65A30D', borderRadius: 5 },
+  { name: '라벨', category: 'room', shapeType: 'rect', width: 300, depth: 120, color: '#FEF3C7', borderColor: '#F59E0B', label: '메모' },
 ];
 
 function createComponentFromPreset(preset: ShapePreset): ClosetComponent {
@@ -81,31 +117,39 @@ function createComponentFromPreset(preset: ShapePreset): ClosetComponent {
 // ── 프리셋 카드 ──────────────────────────
 
 function PresetCard({ preset, onClick }: { preset: ShapePreset; onClick: () => void }) {
+  const isFrame = preset.category === 'frame';
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left rounded-md border border-border bg-card p-2.5 hover:bg-accent hover:border-accent-foreground transition-colors"
+      className="w-full text-left rounded-md border border-border bg-card p-2 hover:bg-accent hover:border-accent-foreground transition-colors"
     >
       <div className="flex items-center gap-2">
         {/* Shape preview */}
         <div
-          className="shrink-0 border"
+          className="shrink-0 border flex items-center justify-center"
           style={{
-            width: 32,
-            height: Math.max(16, 32 * (preset.depth / preset.width)),
+            width: isFrame ? 40 : 32,
+            height: isFrame ? Math.max(20, 40 * (preset.depth / preset.width)) : Math.max(12, 32 * (preset.depth / preset.width)),
             backgroundColor: preset.color,
             borderColor: preset.borderColor || 'transparent',
+            borderWidth: isFrame ? 2 : 1,
             borderRadius: preset.shapeType === 'circle'
               ? '50%'
               : preset.borderRadius
                 ? `${Math.min(preset.borderRadius / 10, 8)}px`
                 : '2px',
           }}
-        />
+        >
+          {isFrame && preset.label && (
+            <span className="text-[8px] font-bold" style={{ color: preset.borderColor }}>
+              {preset.label.split(' ')[0]}
+            </span>
+          )}
+        </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium truncate">{preset.name}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs font-medium truncate">{preset.name}</div>
+          <div className="text-[10px] text-muted-foreground">
             {preset.width}×{preset.depth}mm
           </div>
         </div>
@@ -215,16 +259,15 @@ function PropertyPanel() {
         </div>
       )}
 
-      {selected.label !== undefined && (
-        <div className="space-y-1">
-          <Label className="text-xs">라벨 텍스트</Label>
-          <Input
-            value={selected.label || ''}
-            onChange={(e) => update({ label: e.target.value })}
-            className="h-7 text-xs"
-          />
-        </div>
-      )}
+      <div className="space-y-1">
+        <Label className="text-xs">라벨 텍스트</Label>
+        <Input
+          value={selected.label || ''}
+          onChange={(e) => update({ label: e.target.value || undefined })}
+          className="h-7 text-xs"
+          placeholder="없음"
+        />
+      </div>
     </div>
   );
 }
@@ -252,7 +295,7 @@ export function PartsPalette() {
   return (
     <div className="flex h-full flex-col border-r border-border bg-background">
       <div className="border-b border-border px-3 py-2">
-        <h2 className="text-sm font-semibold">도형 팔레트</h2>
+        <h2 className="text-sm font-semibold">부품 팔레트</h2>
       </div>
 
       <div className="px-3 py-2 border-b border-border">
@@ -260,7 +303,7 @@ export function PartsPalette() {
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="도형 검색..."
+            placeholder="부품 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-8 h-8 text-sm"
@@ -282,7 +325,7 @@ export function PartsPalette() {
                   {category.label} ({category.items.length})
                 </AccordionTrigger>
                 <AccordionContent className="pt-1 pb-2">
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {category.items.map((preset, idx) => (
                       <PresetCard
                         key={`${category.value}-${idx}`}

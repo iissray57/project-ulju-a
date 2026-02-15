@@ -181,6 +181,20 @@ async function generateQuotationPDF(
       };
     });
 
+    // 모델 이미지 조회
+    const { data: modelData } = await supabase
+      .from('closet_models')
+      .select('name, thumbnail_url')
+      .eq('order_id', orderId)
+      .order('created_at', { ascending: true });
+
+    const modelImages = (modelData ?? [])
+      .filter((m: { thumbnail_url: string | null }) => m.thumbnail_url)
+      .map((m: { name: string; thumbnail_url: string | null }) => ({
+        name: m.name,
+        thumbnail_url: m.thumbnail_url!,
+      }));
+
     // QuotationData 구성
     const quotationData: QuotationData = {
       order: {
@@ -198,6 +212,7 @@ async function generateQuotationPDF(
         address: customer.address,
       },
       materials,
+      modelImages,
     };
 
     // PDF 문서 생성
@@ -226,7 +241,7 @@ async function generateTestPDF() {
       { size: 'A4', style: pdfStyles.page },
       React.createElement(PDFHeader, {
         title: '한글 PDF 테스트',
-        subtitle: 'ClosetBiz 견적서 시스템',
+        subtitle: '울주앵글 견적서 시스템',
         date: new Date().toLocaleDateString('ko-KR'),
       }),
       React.createElement(
@@ -301,7 +316,7 @@ async function generateTestPDF() {
         React.createElement(Text, { style: pdfStyles.body }, '• 제품 사양 및 가격은 협의 후 변경될 수 있습니다.'),
         React.createElement(Text, { style: pdfStyles.body }, '• 설치비 및 운송비는 별도 협의됩니다.')
       ),
-      React.createElement(PDFFooter, { pageNumber: 1, totalPages: 1, companyName: 'ClosetBiz' })
+      React.createElement(PDFFooter, { pageNumber: 1, totalPages: 1, companyName: '울주앵글' })
     )
   );
 

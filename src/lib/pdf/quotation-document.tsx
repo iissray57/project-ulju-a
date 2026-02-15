@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, View, Text } from '@react-pdf/renderer';
+import { Document, Page, View, Text, Image } from '@react-pdf/renderer';
 import { pdfStyles, PDF_COLORS } from './styles';
 import { PDFHeader, PDFFooter, PDFTable, PDFSection, PDFRow, PDFDivider } from './components';
 
@@ -27,6 +27,10 @@ export interface QuotationData {
     unit_price: number;
     subtotal: number;
     memo: string | null;
+  }>;
+  modelImages?: Array<{
+    name: string;
+    thumbnail_url: string;
   }>;
 }
 
@@ -56,7 +60,7 @@ function formatDate(dateStr: string | null): string {
  * @returns React.ReactElement (React.createElement 사용, JSX 금지)
  */
 export function generateQuotationDocument(data: QuotationData) {
-  const { order, customer, materials } = data;
+  const { order, customer, materials, modelImages } = data;
 
   // 금액 계산
   const subtotal = order.total_amount;
@@ -177,6 +181,34 @@ export function generateQuotationDocument(data: QuotationData) {
 
       React.createElement(PDFDivider, null),
 
+      // 모델 이미지 섹션
+      modelImages && modelImages.length > 0
+        ? React.createElement(
+            React.Fragment,
+            null,
+            React.createElement(
+              PDFSection,
+              { title: '배치도' },
+              ...modelImages.map((img, idx) =>
+                React.createElement(
+                  View,
+                  { key: idx, style: { marginBottom: 8 } },
+                  React.createElement(
+                    Text,
+                    { style: [pdfStyles.caption, { marginBottom: 4 }] },
+                    img.name
+                  ),
+                  React.createElement(Image, {
+                    src: img.thumbnail_url,
+                    style: { width: '100%', maxHeight: 240, objectFit: 'contain' },
+                  })
+                )
+              )
+            ),
+            React.createElement(PDFDivider, null)
+          )
+        : null,
+
       // 비고 섹션
       React.createElement(
         PDFSection,
@@ -209,7 +241,7 @@ export function generateQuotationDocument(data: QuotationData) {
       React.createElement(PDFFooter, {
         pageNumber: 1,
         totalPages: 1,
-        companyName: 'ClosetBiz',
+        companyName: '울주앵글',
       })
     )
   );

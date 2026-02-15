@@ -18,7 +18,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
-    const saved = localStorage.getItem('closetbiz-theme') as Theme | null;
+    const saved = localStorage.getItem('uljuangle-theme') as Theme | null;
     if (saved) {
       setThemeState(saved);
     }
@@ -50,7 +50,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('closetbiz-theme', newTheme);
+    localStorage.setItem('uljuangle-theme', newTheme);
   };
 
   return (

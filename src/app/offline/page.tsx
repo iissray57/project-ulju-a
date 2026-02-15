@@ -116,7 +116,7 @@ export default function OfflinePage() {
 
         {/* 추가 정보 */}
         <p className="mt-8 text-xs text-muted-foreground">
-          ClosetBiz는 오프라인에서도 일부 기능을 사용할 수 있습니다.
+          울주앵글은 오프라인에서도 일부 기능을 사용할 수 있습니다.
           <br />
           저장된 데이터는 온라인 상태가 되면 자동으로 동기화됩니다.
         </p>

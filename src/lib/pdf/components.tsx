@@ -37,7 +37,7 @@ interface PDFFooterProps {
   companyName?: string;
 }
 
-export function PDFFooter({ pageNumber, totalPages, companyName = 'ClosetBiz' }: PDFFooterProps) {
+export function PDFFooter({ pageNumber, totalPages, companyName = '울주앵글' }: PDFFooterProps) {
   return (
     <View style={pdfStyles.footer} fixed>
       <Text>

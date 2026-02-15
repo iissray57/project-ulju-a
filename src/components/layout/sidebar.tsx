@@ -38,7 +38,7 @@ const navItems = [
 
 const modelingItems = [
   { href: '/closet/presets', label: '프리셋 관리', icon: Box },
-  { href: '/closet/editor', label: '3D 에디터', icon: PencilRuler },
+  { href: '/closet/editor', label: '2D 에디터', icon: PencilRuler },
 ];
 
 const bottomNavItems = [
@@ -63,10 +63,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo */}
       <div className="flex h-14 items-center px-4">
         {!collapsed && (
-          <span className="text-lg font-bold tracking-tight">ClosetBiz</span>
+          <span className="text-lg font-bold tracking-tight">울주앵글</span>
         )}
         {collapsed && (
-          <span className="text-lg font-bold">CB</span>
+          <span className="text-lg font-bold">UA</span>
         )}
       </div>
 
@@ -96,11 +96,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           );
         })}
 
-        {/* 3D 모델링 Section */}
+        {/* 모델링 Section */}
         {!collapsed && (
           <div className="px-3 py-2">
             <h3 className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
-              3D 모델링
+              모델링
             </h3>
           </div>
         )}

@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'ClosetBiz - 옷장 시공 관리',
-    short_name: 'ClosetBiz',
+    name: '울주앵글 - 옷장 시공 관리',
+    short_name: '울주앵글',
     description: '앵글/시스템 옷장 1인 시공업체 업무 관리 시스템',
     start_url: '/',
     display: 'standalone',

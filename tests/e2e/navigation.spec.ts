@@ -19,7 +19,7 @@ test.describe('Page Navigation - Public Routes', () => {
     await page.goto('/offline');
 
     await expect(page).toHaveURL(/\/offline/);
-    await expect(page).toHaveTitle(/ClosetBiz/);
+    await expect(page).toHaveTitle(/울주앵글/);
   });
 });
 
@@ -159,12 +159,12 @@ test.describe('Multiple Page Visits', () => {
 });
 
 test.describe('Page Title Consistency', () => {
-  test('모든 페이지가 ClosetBiz 타이틀을 포함', async ({ page }) => {
+  test('모든 페이지가 울주앵글 타이틀을 포함', async ({ page }) => {
     const routes = ['/login', '/offline'];
 
     for (const route of routes) {
       await page.goto(route);
-      await expect(page).toHaveTitle(/ClosetBiz/);
+      await expect(page).toHaveTitle(/울주앵글/);
     }
   });
 });

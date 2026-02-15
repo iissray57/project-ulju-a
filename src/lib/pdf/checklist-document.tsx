@@ -198,7 +198,7 @@ export function createChecklistDocument(data: ChecklistPDFData) {
       React.createElement(PDFFooter, {
         pageNumber: 1,
         totalPages: 1,
-        companyName: 'ClosetBiz',
+        companyName: '울주앵글',
       })
     )
   );

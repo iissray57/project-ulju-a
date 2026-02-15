@@ -4,7 +4,7 @@ import { signIn, signUp } from './actions';
 import { useRef, useState } from 'react';
 
 const isDev = process.env.NODE_ENV === 'development';
-const TEST_EMAIL = 'test@closetbiz.local';
+const TEST_EMAIL = 'test@uljuangle.local';
 const TEST_PASSWORD = 'test1234';
 
 export default function LoginPage() {

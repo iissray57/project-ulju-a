@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration for ClosetBiz E2E tests
+ * Playwright configuration for UljuAngle E2E tests
  * Phase 1: Chromium only (Chrome-based testing)
  */
 export default defineConfig({

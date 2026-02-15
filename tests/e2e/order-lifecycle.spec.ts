@@ -51,8 +51,8 @@ test.describe('Login Page Rendering', () => {
   test('/login 페이지가 정상적으로 렌더링됨', async ({ page }) => {
     await page.goto('/login');
 
-    // Page title should contain ClosetBiz
-    await expect(page).toHaveTitle(/ClosetBiz/);
+    // Page title should contain 울주앵글
+    await expect(page).toHaveTitle(/울주앵글/);
 
     // Login form heading
     await expect(page.locator('h1')).toContainText('로그인');
@@ -157,7 +157,7 @@ test.describe('Offline Page Accessibility', () => {
     await expect(page).not.toHaveURL(/\/login/);
 
     // Page should render (basic check)
-    await expect(page).toHaveTitle(/ClosetBiz/);
+    await expect(page).toHaveTitle(/울주앵글/);
   });
 });
 

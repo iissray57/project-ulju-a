@@ -23,7 +23,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       </Button>
 
       {/* Mobile logo */}
-      <span className="text-lg font-bold lg:hidden">ClosetBiz</span>
+      <span className="text-lg font-bold lg:hidden">울주앵글</span>
 
       {/* Spacer */}
       <div className="flex-1" />

@@ -10,7 +10,7 @@ export default function DashboardPage() {
     <div className="p-4 lg:p-6">
       <h1 className="text-2xl font-bold">대시보드</h1>
       <p className="mt-2 text-muted-foreground mb-6">
-        ClosetBiz 업무 관리 시스템
+        울주앵글 업무 관리 시스템
       </p>
 
       {/* 그리드 레이아웃: 모바일 1열, 데스크톱 2열 */}

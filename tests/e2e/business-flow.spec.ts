@@ -99,7 +99,7 @@ test.describe('Business Flow - Static Assets & PWA', () => {
   test('오프라인 페이지 접근 가능', async ({ page }) => {
     await page.goto('/offline');
     await expect(page).not.toHaveURL(/\/login/);
-    await expect(page).toHaveTitle(/ClosetBiz/);
+    await expect(page).toHaveTitle(/울주앵글/);
   });
 
   test('manifest.webmanifest 접근 가능', async ({ page }) => {

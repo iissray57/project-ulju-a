@@ -40,7 +40,7 @@ function setupNetworkErrorListener(page: Page, pageName: string, networkErrors: 
   });
 }
 
-test.describe('ClosetBiz Full UI Test', () => {
+test.describe('UljuAngle Full UI Test', () => {
   let consoleErrors: any[] = [];
   let networkErrors: any[] = [];
 
@@ -84,7 +84,7 @@ test.describe('ClosetBiz Full UI Test', () => {
     await page.waitForLoadState('networkidle');
 
     // Check if page loaded
-    await expect(page).toHaveTitle(/ClosetBiz|클로젯비즈|로그인/i);
+    await expect(page).toHaveTitle(/울주앵글|UljuAngle|로그인/i);
 
     // Check for login form elements
     const emailInput = page.locator('input[type="email"], input[name="email"]');

@@ -8,7 +8,7 @@
 - 모르는 것은 모른다고 말한다: 추측으로 답변하지 않는다.
 - 간결 보고: 처리 과정은 생략하고 완료/실패 결과만 아주 간단하게 보고한다. 컴팩트 이슈 방지.
 
-# Project: ClosetBiz (클로젯비즈)
+# Project: UljuAngle (울주앵글)
 
 ## Tech Stack
 - Next.js 15 App Router + React 19 + TypeScript

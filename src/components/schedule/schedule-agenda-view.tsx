@@ -157,7 +157,7 @@ export function ScheduleAgendaView({ schedules }: ScheduleAgendaViewProps) {
                         </span>
                       </div>
 
-                      {/* 수주 정보 */}
+                      {/* 주문 정보 */}
                       {schedule.order && (
                         <div className="text-sm text-muted-foreground">
                           <span className="font-mono">

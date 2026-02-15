@@ -91,7 +91,7 @@ export async function getSchedules(
       query = query.eq('type', type);
     }
 
-    // 수주 ID 필터
+    // 주문 ID 필터
     if (orderId) {
       query = query.eq('order_id', orderId);
     }

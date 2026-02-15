@@ -35,7 +35,7 @@ export const scheduleFormSchema = z.object({
   duration_minutes: z.number().int().positive().optional(),
   location: z.string().optional(),
   memo: z.string().optional(),
-  is_active: z.boolean().default(true),
+  is_active: z.boolean().optional().default(true),
 });
 
 export type ScheduleFormData = z.infer<typeof scheduleFormSchema>;

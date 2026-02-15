@@ -220,7 +220,7 @@ export function ScheduleCalendarView({
                         )}
                         {schedule.order && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            수주: {schedule.order.order_number}
+                            주문: {schedule.order.order_number}
                           </p>
                         )}
                       </div>

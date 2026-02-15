@@ -26,6 +26,8 @@ import {
 function mapStatus(status: string): OrderStatus {
   return (LEGACY_STATUS_MAP[status] || status) as OrderStatus;
 }
+import { ExportButton } from '@/components/ui/export-button';
+import type { ExportColumn } from '@/lib/utils/export';
 import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
 
 interface OrderListProps {
@@ -57,6 +59,16 @@ function formatDate(dateStr: string): string {
     day: '2-digit',
   });
 }
+
+const ORDER_EXPORT_COLUMNS: ExportColumn<OrderWithCustomer>[] = [
+  { header: '주문번호', accessor: (r) => r.order_number },
+  { header: '고객명', accessor: (r) => r.customer?.name },
+  { header: '유형', accessor: (r) => r.closet_type },
+  { header: '견적액', accessor: (r) => r.quotation_amount },
+  { header: '확정액', accessor: (r) => r.confirmed_amount },
+  { header: '상태', accessor: (r) => r.status ? ORDER_STATUS_LABELS[mapStatus(r.status)] : '' },
+  { header: '등록일', accessor: (r) => r.created_at ? formatDate(r.created_at) : '' },
+];
 
 export function OrderList({ orders, total }: OrderListProps) {
   const router = useRouter();
@@ -126,6 +138,7 @@ export function OrderList({ orders, total }: OrderListProps) {
           onChange={(e) => setQuery(e.target.value)}
           className="max-w-md"
         />
+        <ExportButton data={orders} columns={ORDER_EXPORT_COLUMNS} filename="주문목록" sheetName="주문" />
       </div>
 
       {/* Mobile Card List */}

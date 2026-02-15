@@ -25,6 +25,7 @@ export function CustomerForm({ customerId, defaultValues, onSuccess }: CustomerF
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<CustomerInput>({
     resolver: zodResolver(customerSchema),
@@ -87,8 +88,27 @@ export function CustomerForm({ customerId, defaultValues, onSuccess }: CustomerF
         </Label>
         <Input
           id="phone"
-          {...register('phone')}
+          {...register('phone', {
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+              const digits = e.target.value.replace(/\D/g, '');
+              let formatted = digits;
+              if (digits.startsWith('02')) {
+                if (digits.length <= 2) formatted = digits;
+                else if (digits.length <= 5) formatted = `${digits.slice(0, 2)}-${digits.slice(2)}`;
+                else if (digits.length <= 9) formatted = `${digits.slice(0, 2)}-${digits.slice(2, 5)}-${digits.slice(5)}`;
+                else formatted = `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6, 10)}`;
+              } else {
+                if (digits.length <= 3) formatted = digits;
+                else if (digits.length <= 7) formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`;
+                else if (digits.length <= 10) formatted = `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+                else formatted = `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
+              }
+              setValue('phone', formatted, { shouldValidate: true });
+            },
+          })}
           placeholder="010-1234-5678"
+          inputMode="tel"
+          maxLength={13}
           aria-invalid={!!errors.phone}
         />
         {errors.phone && (

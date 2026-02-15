@@ -8,6 +8,8 @@ import {
   PO_STATUS_COLORS,
   type PoStatus,
 } from '@/lib/schemas/purchase-order';
+import { ExportButton } from '@/components/ui/export-button';
+import type { ExportColumn } from '@/lib/utils/export';
 import type { Database } from '@/lib/database.types';
 
 type PurchaseOrder = Database['public']['Tables']['purchase_orders']['Row'];
@@ -23,6 +25,15 @@ function formatCurrency(amount: number): string {
   return `₩${manWon.toFixed(0)}만`;
 }
 
+const PO_EXPORT_COLUMNS: ExportColumn<PurchaseOrder>[] = [
+  { header: '발주번호', accessor: (r) => r.po_number },
+  { header: '거래처', accessor: (r) => r.supplier_name },
+  { header: '상태', accessor: (r) => PO_STATUS_LABELS[r.status as PoStatus] },
+  { header: '금액', accessor: (r) => r.total_amount },
+  { header: '결제일', accessor: (r) => r.payment_date ? new Date(r.payment_date).toLocaleDateString('ko-KR') : '' },
+  { header: '등록일', accessor: (r) => r.created_at ? new Date(r.created_at).toLocaleDateString('ko-KR') : '' },
+];
+
 export function PurchaseOrderList({ orders, total }: PurchaseOrderListProps) {
   const router = useRouter();
 
@@ -36,8 +47,9 @@ export function PurchaseOrderList({ orders, total }: PurchaseOrderListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-muted-foreground">
-        총 {total}건
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">총 {total}건</div>
+        <ExportButton data={orders} columns={PO_EXPORT_COLUMNS} filename="발주목록" sheetName="발주" />
       </div>
 
       <div className="space-y-3">

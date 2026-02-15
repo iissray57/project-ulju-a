@@ -13,6 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ExportButton } from '@/components/ui/export-button';
+import type { ExportColumn } from '@/lib/utils/export';
 import type { Database } from '@/lib/database.types';
 
 type Customer = Database['public']['Tables']['customers']['Row'];
@@ -21,6 +23,14 @@ interface CustomerListProps {
   customers: Customer[];
   total: number;
 }
+
+const CUSTOMER_EXPORT_COLUMNS: ExportColumn<Customer>[] = [
+  { header: '고객명', accessor: (r) => r.name },
+  { header: '연락처', accessor: (r) => r.phone },
+  { header: '주소', accessor: (r) => r.address },
+  { header: '상세주소', accessor: (r) => r.address_detail },
+  { header: '메모', accessor: (r) => r.memo },
+];
 
 export function CustomerList({ customers, total }: CustomerListProps) {
   const router = useRouter();
@@ -64,6 +74,7 @@ export function CustomerList({ customers, total }: CustomerListProps) {
           onChange={(e) => setQuery(e.target.value)}
           className="max-w-md"
         />
+        <ExportButton data={customers} columns={CUSTOMER_EXPORT_COLUMNS} filename="고객목록" sheetName="고객" />
       </div>
 
       {/* Mobile Card List */}

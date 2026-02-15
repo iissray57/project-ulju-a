@@ -13,6 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ExportButton } from '@/components/ui/export-button';
+import type { ExportColumn } from '@/lib/utils/export';
 import type { Database } from '@/lib/database.types';
 
 type Supplier = Database['public']['Tables']['suppliers']['Row'];
@@ -21,6 +23,14 @@ interface SupplierListProps {
   suppliers: Supplier[];
   total: number;
 }
+
+const SUPPLIER_EXPORT_COLUMNS: ExportColumn<Supplier>[] = [
+  { header: '거래처명', accessor: (r) => r.name },
+  { header: '연락처', accessor: (r) => r.phone },
+  { header: '담당자', accessor: (r) => r.contact_person },
+  { header: '사업자번호', accessor: (r) => r.business_number },
+  { header: '상태', accessor: (r) => r.is_active === false ? '비활성' : '활성' },
+];
 
 export function SupplierList({ suppliers, total }: SupplierListProps) {
   const router = useRouter();
@@ -64,6 +74,7 @@ export function SupplierList({ suppliers, total }: SupplierListProps) {
           onChange={(e) => setQuery(e.target.value)}
           className="max-w-md"
         />
+        <ExportButton data={suppliers} columns={SUPPLIER_EXPORT_COLUMNS} filename="거래처목록" sheetName="거래처" />
       </div>
 
       {/* Mobile Card List */}

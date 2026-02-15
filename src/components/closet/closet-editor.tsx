@@ -14,12 +14,10 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import type { ClosetPreset } from '@/app/(dashboard)/closet/actions';
 import { saveClosetModel, loadClosetModel } from '@/app/(dashboard)/closet/model-actions';
 import { DEFAULT_EDITOR_STATE } from '@/lib/types/closet-editor';
 
 interface ClosetEditorProps {
-  userPresets?: ClosetPreset[];
   orderId?: string;
 }
 
@@ -132,7 +130,7 @@ function ModelSaveBar({ orderId }: { orderId?: string }) {
 
 // ── Main ClosetEditor ───────────────────────────────────────
 
-export function ClosetEditor({ userPresets = [], orderId }: ClosetEditorProps) {
+export function ClosetEditor({ orderId }: ClosetEditorProps) {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
 
   return (
@@ -143,7 +141,7 @@ export function ClosetEditor({ userPresets = [], orderId }: ClosetEditorProps) {
         <div className="flex flex-1 min-h-0">
           {/* Desktop: 좌측 사이드바 */}
           <aside className="hidden lg:flex w-[280px] shrink-0">
-            <PartsPalette userPresets={userPresets} />
+            <PartsPalette />
           </aside>
 
           {/* Mobile: Sheet/Drawer */}
@@ -152,7 +150,7 @@ export function ClosetEditor({ userPresets = [], orderId }: ClosetEditorProps) {
               <SheetHeader className="sr-only">
                 <SheetTitle>부품 팔레트</SheetTitle>
               </SheetHeader>
-              <PartsPalette userPresets={userPresets} />
+              <PartsPalette />
             </SheetContent>
           </Sheet>
 

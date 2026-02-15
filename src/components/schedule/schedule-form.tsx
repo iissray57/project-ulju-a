@@ -58,6 +58,7 @@ interface ScheduleFormProps {
   defaultValues?: Partial<ScheduleFormData>;
   orderId?: string;
   orderNumber?: string;
+  onSuccess?: () => void;
 }
 
 export function ScheduleForm({
@@ -65,6 +66,7 @@ export function ScheduleForm({
   defaultValues,
   orderId,
   orderNumber,
+  onSuccess,
 }: ScheduleFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -137,8 +139,12 @@ export function ScheduleForm({
       }
 
       toast.success(scheduleId ? '일정이 수정되었습니다.' : '일정이 등록되었습니다.');
-      router.push('/schedule');
-      router.refresh();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push('/schedule');
+        router.refresh();
+      }
     } catch {
       toast.error('오류가 발생했습니다.');
     } finally {
@@ -307,7 +313,7 @@ export function ScheduleForm({
 
       {/* 버튼 */}
       <div className="flex gap-3 justify-end">
-        <Button type="button" variant="outline" onClick={() => router.back()}>
+        <Button type="button" variant="outline" onClick={() => onSuccess ? onSuccess() : router.back()}>
           취소
         </Button>
         <Button type="submit" disabled={isSubmitting}>

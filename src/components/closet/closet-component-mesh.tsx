@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useState, useCallback } from 'react';
-import { Edges } from '@react-three/drei';
+import { useRef, useState, useCallback, useMemo } from 'react';
+import { Html } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { Mesh } from 'three';
@@ -15,8 +15,31 @@ interface ClosetComponentMeshProps {
 
 /** Snap a value to the nearest grid increment. */
 function snapToGrid(value: number, gridSizeMm: number): number {
-  const unit = gridSizeMm / 100; // mm -> scene units
+  const unit = gridSizeMm / 100;
   return Math.round(value / unit) * unit;
+}
+
+/** Create a rounded rectangle shape for Three.js */
+function createRoundedRectShape(w: number, d: number, radius: number): THREE.Shape {
+  const r = Math.min(radius, w / 2, d / 2);
+  const shape = new THREE.Shape();
+  shape.moveTo(-w / 2 + r, -d / 2);
+  shape.lineTo(w / 2 - r, -d / 2);
+  shape.quadraticCurveTo(w / 2, -d / 2, w / 2, -d / 2 + r);
+  shape.lineTo(w / 2, d / 2 - r);
+  shape.quadraticCurveTo(w / 2, d / 2, w / 2 - r, d / 2);
+  shape.lineTo(-w / 2 + r, d / 2);
+  shape.quadraticCurveTo(-w / 2, d / 2, -w / 2, d / 2 - r);
+  shape.lineTo(-w / 2, -d / 2 + r);
+  shape.quadraticCurveTo(-w / 2, -d / 2, -w / 2 + r, -d / 2);
+  return shape;
+}
+
+/** Create a circle shape */
+function createCircleShape(radius: number): THREE.Shape {
+  const shape = new THREE.Shape();
+  shape.absarc(0, 0, radius, 0, Math.PI * 2, false);
+  return shape;
 }
 
 export function ClosetComponentMesh({ component }: ClosetComponentMeshProps) {
@@ -29,16 +52,64 @@ export function ClosetComponentMesh({ component }: ClosetComponentMeshProps) {
 
   // Convert mm dimensions to scene units (1 unit = 100mm)
   const w = component.dimensions.width / 100;
-  const h = component.dimensions.height / 100;
   const d = component.dimensions.depth / 100;
+  const borderRadius = (component.borderRadius || 0) / 100;
 
-  // Drag state refs (avoid re-renders during drag)
+  // Create geometry based on shape type
+  const shapeGeometry = useMemo(() => {
+    let shape: THREE.Shape;
+
+    switch (component.shapeType) {
+      case 'rounded-rect':
+        shape = createRoundedRectShape(w, d, borderRadius || 0.1);
+        break;
+      case 'circle': {
+        const radius = Math.min(w, d) / 2;
+        shape = createCircleShape(radius);
+        break;
+      }
+      case 'rect':
+      default:
+        shape = new THREE.Shape();
+        shape.moveTo(-w / 2, -d / 2);
+        shape.lineTo(w / 2, -d / 2);
+        shape.lineTo(w / 2, d / 2);
+        shape.lineTo(-w / 2, d / 2);
+        shape.lineTo(-w / 2, -d / 2);
+        break;
+    }
+
+    return new THREE.ShapeGeometry(shape);
+  }, [component.shapeType, w, d, borderRadius]);
+
+  // Selection outline
+  const outlineGeometry = useMemo(() => {
+    if (!isSelected) return null;
+    const padding = 0.02;
+    const ow = w + padding * 2;
+    const od = d + padding * 2;
+    const shape = component.shapeType === 'rounded-rect'
+      ? createRoundedRectShape(ow, od, (borderRadius || 0.1) + padding)
+      : component.shapeType === 'circle'
+        ? createCircleShape(Math.min(ow, od) / 2)
+        : (() => {
+            const s = new THREE.Shape();
+            s.moveTo(-ow / 2, -od / 2);
+            s.lineTo(ow / 2, -od / 2);
+            s.lineTo(ow / 2, od / 2);
+            s.lineTo(-ow / 2, od / 2);
+            s.lineTo(-ow / 2, -od / 2);
+            return s;
+          })();
+    return new THREE.ShapeGeometry(shape);
+  }, [isSelected, w, d, borderRadius, component.shapeType]);
+
+  // Drag state refs
   const [isDragging, setIsDragging] = useState(false);
   const dragPlane = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
   const dragOffset = useRef(new THREE.Vector3());
   const raycaster = useRef(new THREE.Raycaster());
 
-  /** Convert client coords to NDC. */
   const toNDC = useCallback(
     (clientX: number, clientY: number): THREE.Vector2 => {
       const rect = gl.domElement.getBoundingClientRect();
@@ -50,31 +121,24 @@ export function ClosetComponentMesh({ component }: ClosetComponentMeshProps) {
     [gl],
   );
 
-  /** Raycast from NDC coords onto the drag plane. */
   const raycastToPlane = useCallback(
     (ndc: THREE.Vector2): THREE.Vector3 | null => {
       raycaster.current.setFromCamera(ndc, camera);
       const target = new THREE.Vector3();
-      const hit = raycaster.current.ray.intersectPlane(dragPlane.current, target);
-      return hit;
+      return raycaster.current.ray.intersectPlane(dragPlane.current, target);
     },
     [camera],
   );
 
-  // ── Pointer Handlers ────────────────────────────────────
-
   const handlePointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
-      if (component.locked) return;
+      if (component.locked || e.button !== 0) return;
       e.stopPropagation();
 
-      // Select on pointer down
       dispatch({ type: 'SELECT_COMPONENT', payload: component.id });
 
-      // Set drag plane at the component's Y position
-      dragPlane.current.set(new THREE.Vector3(0, 1, 0), -component.position[1]);
+      dragPlane.current.set(new THREE.Vector3(0, 1, 0), 0);
 
-      // Calculate offset between intersection point and component position
       const ndc = toNDC(e.clientX, e.clientY);
       const hit = raycastToPlane(ndc);
       if (!hit) return;
@@ -87,8 +151,6 @@ export function ClosetComponentMesh({ component }: ClosetComponentMeshProps) {
 
       setIsDragging(true);
       dispatch({ type: 'SET_DRAGGING', payload: true });
-
-      // Capture pointer so we get move/up events even outside the mesh
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
       gl.domElement.style.cursor = 'grabbing';
     },
@@ -116,20 +178,17 @@ export function ClosetComponentMesh({ component }: ClosetComponentMeshProps) {
         type: 'UPDATE_COMPONENT',
         payload: {
           id: component.id,
-          changes: {
-            position: [newX, component.position[1], newZ],
-          },
+          changes: { position: [newX, 0, newZ] },
         },
       });
     },
-    [isDragging, component.id, component.position, snapEnabled, gridSize, dispatch, toNDC, raycastToPlane],
+    [isDragging, component.id, snapEnabled, gridSize, dispatch, toNDC, raycastToPlane],
   );
 
   const handlePointerUp = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       if (!isDragging) return;
       e.stopPropagation();
-
       setIsDragging(false);
       dispatch({ type: 'SET_DRAGGING', payload: false });
       gl.domElement.style.cursor = 'auto';
@@ -142,27 +201,69 @@ export function ClosetComponentMesh({ component }: ClosetComponentMeshProps) {
     dispatch({ type: 'SELECT_COMPONENT', payload: component.id });
   };
 
+  const opacity = component.opacity ?? 1;
+
   return (
-    <mesh
-      ref={meshRef}
-      position={component.position}
-      rotation={component.rotation}
-      scale={component.scale}
-      onClick={handleClick}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
+    <group
+      position={[component.position[0], 0.01, component.position[2]]}
+      rotation={[-Math.PI / 2, 0, component.rotation[1]]}
     >
-      <boxGeometry args={[w, h, d]} />
-      <meshStandardMaterial
-        color={component.color}
-        transparent={isSelected}
-        opacity={isSelected ? 0.85 : 1}
-      />
-      {isSelected && (
-        <Edges linewidth={2} color="#2563eb" />
+      {/* Selection outline (behind) */}
+      {isSelected && outlineGeometry && (
+        <mesh position={[0, 0, -0.001]} geometry={outlineGeometry}>
+          <meshBasicMaterial color="#2563eb" transparent opacity={0.3} />
+        </mesh>
       )}
-    </mesh>
+
+      {/* Main shape */}
+      <mesh
+        ref={meshRef}
+        geometry={shapeGeometry}
+        onClick={handleClick}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+      >
+        <meshBasicMaterial
+          color={component.color}
+          transparent={opacity < 1 || isSelected}
+          opacity={isSelected ? Math.min(opacity, 0.9) : opacity}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Border */}
+      {component.borderColor && (
+        <lineLoop>
+          <bufferGeometry attach="geometry">
+            <bufferAttribute
+              attach="attributes-position"
+              args={[shapeGeometry.attributes.position.array, 3]}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color={component.borderColor} linewidth={1} />
+        </lineLoop>
+      )}
+
+      {/* Label */}
+      {component.label && (
+        <Html center distanceFactor={6} zIndexRange={[5, 0]}>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 500,
+              color: '#374151',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+              userSelect: 'none',
+              textShadow: '0 0 3px rgba(255,255,255,0.8)',
+            }}
+          >
+            {component.label}
+          </div>
+        </Html>
+      )}
+    </group>
   );
 }

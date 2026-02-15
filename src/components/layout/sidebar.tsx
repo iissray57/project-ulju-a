@@ -17,6 +17,7 @@ import {
   PencilRuler,
   Users,
   Boxes,
+  Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ const navItems = [
   { href: '/products', label: '품목관리', icon: Boxes },
   { href: '/inventory', label: '재고관리', icon: Package },
   { href: '/purchases', label: '발주관리', icon: ShoppingCart },
+  { href: '/suppliers', label: '거래처', icon: Building2 },
   { href: '/finance', label: '매출/매입', icon: DollarSign },
   { href: '/reports', label: '리포트', icon: FileText },
 ];

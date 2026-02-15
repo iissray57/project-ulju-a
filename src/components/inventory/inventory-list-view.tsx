@@ -1,15 +1,27 @@
 'use client';
 
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Settings2 } from 'lucide-react';
 import { PRODUCT_CATEGORY_LABELS } from '@/lib/schemas/product';
 import type { InventoryWithProduct } from '@/app/(dashboard)/inventory/actions';
 import { cn } from '@/lib/utils';
+import { AdjustInventoryDialog } from './adjust-inventory-dialog';
 
 interface InventoryListViewProps {
   items: InventoryWithProduct[];
 }
 
 export function InventoryListView({ items }: InventoryListViewProps) {
+  const [adjustDialog, setAdjustDialog] = useState<{
+    open: boolean;
+    productId: string;
+    productName: string;
+    currentQuantity: number;
+    heldQuantity: number;
+  } | null>(null);
+
   if (items.length === 0) {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
@@ -19,7 +31,8 @@ export function InventoryListView({ items }: InventoryListViewProps) {
   }
 
   return (
-    <div className="rounded-lg border">
+    <>
+      <div className="rounded-lg border">
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full">
@@ -33,6 +46,7 @@ export function InventoryListView({ items }: InventoryListViewProps) {
               <th className="px-4 py-3 text-right text-sm font-medium">가용</th>
               <th className="px-4 py-3 text-right text-sm font-medium">최소</th>
               <th className="px-4 py-3 text-center text-sm font-medium">상태</th>
+              <th className="px-4 py-3 text-center text-sm font-medium">작업</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -91,6 +105,26 @@ export function InventoryListView({ items }: InventoryListViewProps) {
                           정상
                         </Badge>
                       )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setAdjustDialog({
+                            open: true,
+                            productId: product.id,
+                            productName: product.name,
+                            currentQuantity: item.quantity,
+                            heldQuantity: item.held_quantity,
+                          })
+                        }
+                      >
+                        <Settings2 className="h-4 w-4" />
+                        조정
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -169,10 +203,43 @@ export function InventoryListView({ items }: InventoryListViewProps) {
                   <p className="font-medium">{product.min_stock}</p>
                 </div>
               </div>
+
+              {/* Actions */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() =>
+                  setAdjustDialog({
+                    open: true,
+                    productId: product.id,
+                    productName: product.name,
+                    currentQuantity: item.quantity,
+                    heldQuantity: item.held_quantity,
+                  })
+                }
+              >
+                <Settings2 className="h-4 w-4" />
+                재고 조정
+              </Button>
             </div>
           );
         })}
       </div>
     </div>
+
+    {/* Adjust Dialog */}
+    {adjustDialog && (
+      <AdjustInventoryDialog
+        open={adjustDialog.open}
+        onOpenChange={(open) => !open && setAdjustDialog(null)}
+        productId={adjustDialog.productId}
+        productName={adjustDialog.productName}
+        currentQuantity={adjustDialog.currentQuantity}
+        heldQuantity={adjustDialog.heldQuantity}
+        onSuccess={() => setAdjustDialog(null)}
+      />
+    )}
+  </>
   );
 }

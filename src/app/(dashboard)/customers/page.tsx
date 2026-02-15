@@ -1,6 +1,5 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { CustomerList } from '@/components/customers/customer-list';
+import { CustomerFormDialog } from '@/components/customers/customer-form-dialog';
 import { getCustomers } from './actions';
 
 interface PageProps {
@@ -39,9 +38,7 @@ export default async function CustomersPage({ searchParams }: PageProps) {
             총 {total}명의 고객이 등록되어 있습니다
           </p>
         </div>
-        <Button asChild>
-          <Link href="/customers/new">신규 고객 등록</Link>
-        </Button>
+        <CustomerFormDialog />
       </div>
 
       <CustomerList customers={customers} total={total} />

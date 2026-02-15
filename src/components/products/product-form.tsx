@@ -30,9 +30,11 @@ import { toast } from 'sonner';
 interface ProductFormProps {
   productId?: string;
   defaultValues?: ProductFormData;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
-export function ProductForm({ productId, defaultValues }: ProductFormProps) {
+export function ProductForm({ productId, defaultValues, onSuccess, onCancel }: ProductFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -76,7 +78,11 @@ export function ProductForm({ productId, defaultValues }: ProductFormProps) {
       }
 
       toast.success(productId ? '품목이 수정되었습니다.' : '품목이 등록되었습니다.');
-      router.push('/products');
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push('/products');
+      }
       router.refresh();
     } catch {
       toast.error('오류가 발생했습니다.');
@@ -237,7 +243,7 @@ export function ProductForm({ productId, defaultValues }: ProductFormProps) {
 
       {/* 버튼 */}
       <div className="flex gap-3 justify-end">
-        <Button type="button" variant="outline" onClick={() => router.back()}>
+        <Button type="button" variant="outline" onClick={onCancel || (() => router.back())}>
           취소
         </Button>
         <Button type="submit" disabled={isSubmitting}>

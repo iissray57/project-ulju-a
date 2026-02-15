@@ -403,6 +403,32 @@ export async function transitionOrderStatus(
         console.error('[transitionOrderStatus] cancel_order_cascade error:', rpcError);
         return { error: '주문 취소 처리 중 오류가 발생했습니다.' };
       }
+    } else if (newStatus === 'confirmed') {
+      // 확정 시 자재 홀드 처리
+      const { error: rpcError } = await supabase.rpc('hold_materials_for_order', {
+        p_order_id: orderId,
+      });
+
+      if (rpcError) {
+        console.error('[transitionOrderStatus] hold_materials_for_order error:', rpcError);
+        // 자재 홀드 실패해도 상태는 변경 (자재가 없을 수 있음)
+        console.warn('자재 홀드에 실패했으나 상태는 변경됩니다.');
+      }
+
+      // 상태 업데이트
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId)
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error('[transitionOrderStatus] Update error:', updateError);
+        return { error: updateError.message };
+      }
     } else if (newStatus === 'completed') {
       // 작업 완료 시 자재 출고 처리
       const { error: rpcError } = await supabase.rpc('dispatch_materials_for_order', {

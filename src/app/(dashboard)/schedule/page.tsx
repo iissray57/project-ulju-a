@@ -1,6 +1,5 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { ScheduleViewContainer } from '@/components/schedule/schedule-view-container';
+import { ScheduleFormDialog } from '@/components/schedule/schedule-form-dialog';
 import { getSchedules } from './actions';
 import { getMonthRange } from '@/lib/utils/date';
 
@@ -64,9 +63,7 @@ export default async function SchedulePage({ searchParams }: PageProps) {
             {year}년 {month + 1}월 일정을 확인하세요
           </p>
         </div>
-        <Button asChild>
-          <Link href="/schedule/new">신규 일정 등록</Link>
-        </Button>
+        <ScheduleFormDialog />
       </div>
 
       <ScheduleViewContainer

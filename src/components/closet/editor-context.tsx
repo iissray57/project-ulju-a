@@ -20,11 +20,12 @@ type EditorAction =
   | { type: 'REMOVE_COMPONENT'; payload: string }
   | { type: 'UPDATE_COMPONENT'; payload: { id: string; changes: Partial<ClosetComponent> } }
   | { type: 'SELECT_COMPONENT'; payload: string | null }
-  | { type: 'SET_CAMERA_MODE'; payload: '2d' | '3d' }
   | { type: 'SET_GRID_SIZE'; payload: number }
   | { type: 'TOGGLE_SNAP' }
   | { type: 'TOGGLE_DIMENSIONS' }
+  | { type: 'TOGGLE_GRID' }
   | { type: 'RESET_CAMERA' }
+  | { type: 'SET_ZOOM'; payload: number }
   | { type: 'SET_DRAGGING'; payload: boolean }
   | { type: 'LOAD_STATE'; payload: EditorState }
   | { type: 'CLEAR_ALL' };
@@ -58,9 +59,6 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
     case 'SELECT_COMPONENT':
       return { ...state, selectedId: action.payload };
 
-    case 'SET_CAMERA_MODE':
-      return { ...state, cameraMode: action.payload };
-
     case 'SET_GRID_SIZE':
       return { ...state, gridSize: action.payload };
 
@@ -70,8 +68,14 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
     case 'TOGGLE_DIMENSIONS':
       return { ...state, showDimensions: !state.showDimensions };
 
+    case 'TOGGLE_GRID':
+      return { ...state, showGrid: !state.showGrid };
+
     case 'RESET_CAMERA':
       return { ...state, cameraResetCounter: state.cameraResetCounter + 1 };
+
+    case 'SET_ZOOM':
+      return { ...state, zoom: action.payload };
 
     case 'SET_DRAGGING':
       return { ...state, isDragging: action.payload };

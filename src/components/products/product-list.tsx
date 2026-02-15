@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Link from 'next/link';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -26,11 +25,20 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
   PRODUCT_CATEGORIES,
   PRODUCT_CATEGORY_LABELS,
   type ProductCategory,
+  type ProductFormData,
 } from '@/lib/schemas/product';
-import { deleteProduct } from '@/app/(dashboard)/products/actions';
+import { deleteProduct, getProduct } from '@/app/(dashboard)/products/actions';
+import { ProductForm } from './product-form';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import type { Database } from '@/lib/database.types';
@@ -47,6 +55,11 @@ export function ProductList({ products, total }: ProductListProps) {
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<{ id: string; data: ProductFormData } | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
 
   // Filter logic
   const filteredProducts = useMemo(() => {
@@ -88,6 +101,55 @@ export function ProductList({ products, total }: ProductListProps) {
     }
   };
 
+  const handleOpenNew = () => {
+    setEditingProduct(null);
+    setDialogOpen(true);
+  };
+
+  const handleOpenEdit = async (product: ProductRow) => {
+    setLoadingEdit(true);
+    try {
+      const result = await getProduct(product.id);
+      if (result.error || !result.data) {
+        toast.error(result.error || '품목을 불러올 수 없습니다.');
+        return;
+      }
+      const p = result.data;
+      setEditingProduct({
+        id: p.id,
+        data: {
+          name: p.name,
+          category: p.category as ProductCategory,
+          sku: p.sku || '',
+          unit: p.unit || 'EA',
+          unit_price: p.unit_price || 0,
+          min_stock: p.min_stock || 0,
+          width: p.width ?? undefined,
+          depth: p.depth ?? undefined,
+          height: p.height ?? undefined,
+          color: p.color || '',
+          memo: p.memo || '',
+          is_active: p.is_active ?? true,
+        },
+      });
+      setDialogOpen(true);
+    } catch {
+      toast.error('품목 조회 중 오류가 발생했습니다.');
+    } finally {
+      setLoadingEdit(false);
+    }
+  };
+
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    setEditingProduct(null);
+  };
+
+  const handleFormSuccess = () => {
+    handleDialogClose();
+    router.refresh();
+  };
+
   const formatPrice = (price: number | null) => {
     if (!price) return '-';
     return price.toLocaleString('ko-KR') + '원';
@@ -95,6 +157,20 @@ export function ProductList({ products, total }: ProductListProps) {
 
   return (
     <div className="space-y-4">
+      {/* Header with Add button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">품목 관리</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            재고 관리에 사용되는 품목(제품)을 등록하고 관리합니다
+          </p>
+        </div>
+        <Button onClick={handleOpenNew}>
+          <Plus className="h-4 w-4" />
+          품목 등록
+        </Button>
+      </div>
+
       {/* Filters */}
       <div className="space-y-3">
         {/* Category chips */}
@@ -167,10 +243,13 @@ export function ProductList({ products, total }: ProductListProps) {
                   <TableCell className="text-right">{product.min_stock || 0}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link href={`/products/${product.id}/edit`}>
-                          <Pencil className="h-4 w-4" />
-                        </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={loadingEdit}
+                        onClick={() => handleOpenEdit(product)}
+                      >
+                        <Pencil className="h-4 w-4" />
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -207,6 +286,26 @@ export function ProductList({ products, total }: ProductListProps) {
           </Table>
         </div>
       )}
+
+      {/* Product Form Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) handleDialogClose(); }}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] p-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle>
+              {editingProduct ? '품목 수정' : '품목 등록'}
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[calc(90vh-5rem)] px-6 pb-6">
+            <ProductForm
+              key={editingProduct?.id ?? 'new'}
+              productId={editingProduct?.id}
+              defaultValues={editingProduct?.data}
+              onSuccess={handleFormSuccess}
+              onCancel={handleDialogClose}
+            />
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

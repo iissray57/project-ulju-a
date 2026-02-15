@@ -1,11 +1,17 @@
 'use client';
 
 import { signIn, signUp } from './actions';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+
+const isDev = process.env.NODE_ENV === 'development';
+const TEST_EMAIL = 'test@closetbiz.local';
+const TEST_PASSWORD = 'test1234';
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (formData: FormData) => {
     setError(null);
@@ -13,6 +19,11 @@ export default function LoginPage() {
     if (result?.error) {
       setError(result.error);
     }
+  };
+
+  const fillTestAccount = () => {
+    if (emailRef.current) emailRef.current.value = TEST_EMAIL;
+    if (passwordRef.current) passwordRef.current.value = TEST_PASSWORD;
   };
 
   return (
@@ -27,6 +38,7 @@ export default function LoginPage() {
             이메일
           </label>
           <input
+            ref={emailRef}
             id="email"
             name="email"
             type="email"
@@ -41,6 +53,7 @@ export default function LoginPage() {
             비밀번호
           </label>
           <input
+            ref={passwordRef}
             id="password"
             name="password"
             type="password"
@@ -78,6 +91,18 @@ export default function LoginPage() {
             : '계정이 없으신가요? 회원가입'}
         </button>
       </div>
+
+      {isDev && !isSignUp && (
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+          <button
+            type="button"
+            onClick={fillTestAccount}
+            className="w-full text-sm py-2 px-4 rounded-md border border-dashed border-gray-400 dark:border-gray-500 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            테스트 계정 자동입력
+          </button>
+        </div>
+      )}
     </div>
   );
 }

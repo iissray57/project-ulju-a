@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCustomer } from '../actions';
 import { DeleteCustomerButton } from '@/components/customers/delete-customer-button';
+import { CustomerFormDialog } from '@/components/customers/customer-form-dialog';
+import { ScheduleFormDialog } from '@/components/schedule/schedule-form-dialog';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -30,9 +32,18 @@ export default async function CustomerDetailPage({ params }: PageProps) {
           <Button variant="outline" asChild>
             <Link href="/customers">목록으로</Link>
           </Button>
-          <Button asChild>
-            <Link href={`/customers/${id}/edit`}>수정</Link>
-          </Button>
+          <ScheduleFormDialog />
+          <CustomerFormDialog
+            customerId={id}
+            defaultValues={{
+              name: customer.name,
+              phone: customer.phone,
+              address: customer.address || '',
+              address_detail: customer.address_detail || '',
+              memo: customer.memo || '',
+            }}
+            trigger={<Button variant="outline">수정</Button>}
+          />
           <DeleteCustomerButton customerId={id} customerName={customer.name} />
         </div>
       </div>

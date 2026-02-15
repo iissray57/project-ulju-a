@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Grid, OrbitControls, OrthographicCamera, PerspectiveCamera } from '@react-three/drei';
+import { Grid, OrbitControls, OrthographicCamera } from '@react-three/drei';
 import { useTheme } from 'next-themes';
 import { useEditorState, useEditorDispatch } from './editor-context';
 import { ClosetComponentMesh } from './closet-component-mesh';
@@ -12,12 +12,13 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 function Scene() {
   const {
     components,
-    cameraMode,
     gridSize,
     cameraResetCounter,
     isDragging,
     showDimensions,
+    showGrid,
     selectedId,
+    zoom,
   } = useEditorState();
   const dispatch = useEditorDispatch();
   const { resolvedTheme } = useTheme();
@@ -55,42 +56,24 @@ function Scene() {
 
   return (
     <>
-      {/* Cameras */}
-      {cameraMode === '2d' ? (
-        <OrthographicCamera
-          makeDefault
-          position={[0, 10, 0]}
-          zoom={80}
-          near={0.1}
-          far={100}
-          key={`ortho-${cameraResetCounter}`}
-        />
-      ) : (
-        <PerspectiveCamera
-          makeDefault
-          position={[8, 6, 8]}
-          fov={50}
-          near={0.1}
-          far={200}
-          key={`persp-${cameraResetCounter}`}
-        />
-      )}
+      <OrthographicCamera
+        makeDefault
+        position={[0, 10, 0]}
+        zoom={zoom}
+        near={0.1}
+        far={100}
+        key={`ortho-${cameraResetCounter}`}
+      />
 
-      {/* Controls */}
       <OrbitControls
         ref={controlsRef}
-        enableRotate={cameraMode === '3d'}
+        enableRotate={false}
         enablePan
         enableZoom
-        // 2D mode: top-down view locked
-        maxPolarAngle={cameraMode === '2d' ? 0 : Math.PI / 2.1}
-        minPolarAngle={cameraMode === '2d' ? 0 : 0}
-        // 2D mode: zoom limits
-        minZoom={cameraMode === '2d' ? 20 : undefined}
-        maxZoom={cameraMode === '2d' ? 200 : undefined}
-        // 3D mode: distance limits
-        minDistance={cameraMode === '3d' ? 2 : undefined}
-        maxDistance={cameraMode === '3d' ? 50 : undefined}
+        maxPolarAngle={0}
+        minPolarAngle={0}
+        minZoom={20}
+        maxZoom={300}
       />
 
       {/* Lighting */}
@@ -99,17 +82,19 @@ function Scene() {
       <directionalLight position={[-3, 8, -3]} intensity={0.3} />
 
       {/* Grid */}
-      <Grid
-        args={[30, 30]}
-        cellSize={cellSize}
-        sectionSize={sectionSize}
-        cellColor={isDark ? '#444444' : '#cccccc'}
-        sectionColor={isDark ? '#666666' : '#999999'}
-        fadeDistance={30}
-        fadeStrength={1}
-        infiniteGrid
-        position={[0, 0, 0]}
-      />
+      {showGrid && (
+        <Grid
+          args={[50, 50]}
+          cellSize={cellSize}
+          sectionSize={sectionSize}
+          cellColor={isDark ? '#444444' : '#cccccc'}
+          sectionColor={isDark ? '#666666' : '#999999'}
+          fadeDistance={40}
+          fadeStrength={1}
+          infiniteGrid
+          position={[0, -0.01, 0]}
+        />
+      )}
 
       {/* Components */}
       <group onPointerMissed={handlePointerMissed}>

@@ -21,24 +21,23 @@ const labelStyle: React.CSSProperties = {
 };
 
 /**
- * Renders width / height / depth dimension labels around a selected component.
- * Each label is positioned at the midpoint of the corresponding edge.
+ * Renders width / depth dimension labels around a selected component (2D top-down view).
+ * Labels positioned at the midpoint of the corresponding edge.
  */
 export function DimensionLabel({ component }: DimensionLabelProps) {
   const w = component.dimensions.width / 100; // scene units
-  const h = component.dimensions.height / 100;
   const d = component.dimensions.depth / 100;
 
-  const [cx, cy, cz] = component.position;
+  const [cx, , cz] = component.position;
 
   // Small gap so labels don't overlap the mesh edge
   const gap = 0.15;
 
   return (
     <group>
-      {/* Width label -- along X axis, above the top face */}
+      {/* Width label -- along X axis, above (negative Z) */}
       <Html
-        position={[cx, cy + h / 2 + gap, cz]}
+        position={[cx, 0.02, cz - d / 2 - gap]}
         center
         distanceFactor={8}
         zIndexRange={[10, 0]}
@@ -46,19 +45,9 @@ export function DimensionLabel({ component }: DimensionLabelProps) {
         <div style={labelStyle}>W {component.dimensions.width}mm</div>
       </Html>
 
-      {/* Height label -- along Y axis, to the right */}
+      {/* Depth label -- along Z axis, to the right (positive X) */}
       <Html
-        position={[cx + w / 2 + gap, cy, cz]}
-        center
-        distanceFactor={8}
-        zIndexRange={[10, 0]}
-      >
-        <div style={labelStyle}>H {component.dimensions.height}mm</div>
-      </Html>
-
-      {/* Depth label -- along Z axis, in front */}
-      <Html
-        position={[cx, cy, cz + d / 2 + gap]}
+        position={[cx + w / 2 + gap, 0.02, cz]}
         center
         distanceFactor={8}
         zIndexRange={[10, 0]}

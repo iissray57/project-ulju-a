@@ -15,9 +15,10 @@ import { toast } from 'sonner';
 interface CustomerFormProps {
   customerId?: string;
   defaultValues?: CustomerInput;
+  onSuccess?: () => void;
 }
 
-export function CustomerForm({ customerId, defaultValues }: CustomerFormProps) {
+export function CustomerForm({ customerId, defaultValues, onSuccess }: CustomerFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,8 +52,12 @@ export function CustomerForm({ customerId, defaultValues }: CustomerFormProps) {
       }
 
       toast.success(customerId ? '고객 정보가 수정되었습니다' : '고객이 등록되었습니다');
-      router.push('/customers');
-      router.refresh();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push('/customers');
+        router.refresh();
+      }
     } catch {
       toast.error('오류가 발생했습니다');
       setIsSubmitting(false);
@@ -135,7 +140,7 @@ export function CustomerForm({ customerId, defaultValues }: CustomerFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.back()}
+          onClick={() => onSuccess ? onSuccess() : router.back()}
           disabled={isSubmitting}
           className="w-full sm:w-auto"
         >

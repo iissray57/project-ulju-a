@@ -53,3 +53,7 @@
 - 파일명: kebab-case (예: `order-pipeline.tsx`)
 - 컴포넌트명: PascalCase (예: `OrderPipeline`)
 - Supabase Auth: 반드시 `getUser()` 사용 (getSession 금지)
+
+## Development Server
+- 개발 서버 포트: **3031** (`npm run dev -- -p 3031`)
+- 테스트 URL: http://localhost:3031

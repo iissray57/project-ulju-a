@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 /**
- * 수주별 자재 등록/수정 폼 스키마
+ * 주문별 자재 등록/수정 폼 스키마
  */
 export const orderMaterialSchema = z.object({
-  order_id: z.string().uuid('유효하지 않은 수주 ID입니다'),
+  order_id: z.string().uuid('유효하지 않은 주문 ID입니다'),
   product_id: z.string().uuid('유효하지 않은 제품 ID입니다'),
   planned_quantity: z
     .number()

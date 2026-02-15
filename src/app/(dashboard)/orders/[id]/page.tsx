@@ -10,6 +10,7 @@ import { OrderMaterialsTable } from '@/components/orders/order-materials-table';
 import { OrderChecklist } from '@/components/orders/order-checklist';
 import { getOrderChecklist } from '../checklist-actions';
 import { QuotationDownloadButton } from '@/components/orders/quotation-download-button';
+import { LEGACY_STATUS_MAP, type OrderStatus } from '@/lib/schemas/order-status';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -60,7 +61,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
       <Separator />
 
       {/* 상태 바 */}
-      <OrderStatusBar orderId={id} currentStatus={order.status || 'inquiry'} />
+      <OrderStatusBar orderId={id} currentStatus={(LEGACY_STATUS_MAP[order.status || 'inquiry'] || 'inquiry') as OrderStatus} />
 
       <Separator />
 

@@ -22,8 +22,6 @@ import {
   type OrderStatus,
 } from '@/lib/schemas/order-status';
 import { transitionOrderStatus } from '@/app/(dashboard)/orders/actions';
-import { getOrderMaterialSummary } from '@/app/(dashboard)/orders/material-actions';
-import { ShortageAlertDialog } from '@/components/orders/shortage-alert-dialog';
 import { toast } from 'sonner';
 
 interface OrderStatusBarProps {
@@ -36,10 +34,6 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
-  const [showShortageDialog, setShowShortageDialog] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [shortageItems, setShortageItems] = useState<any[]>([]);
-  const [pendingTransition, setPendingTransition] = useState<OrderStatus | null>(null);
 
   const availableTransitions = ORDER_TRANSITIONS[currentStatus];
 
@@ -53,36 +47,7 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
       return;
     }
 
-    // material_held로 전이 시 자재 부족 확인
-    if (newStatus === 'material_held') {
-      setIsTransitioning(true);
-      try {
-        const result = await getOrderMaterialSummary(orderId);
-        if (result.error) {
-          toast.error(result.error);
-          setIsTransitioning(false);
-          return;
-        }
-
-        const shortages = result.data?.items.filter((item) => item.shortage_quantity > 0) ?? [];
-
-        if (shortages.length > 0) {
-          // 부족 품목이 있으면 경고 다이얼로그 표시
-          setShortageItems(result.data?.items ?? []);
-          setPendingTransition(newStatus);
-          setShowShortageDialog(true);
-          setIsTransitioning(false);
-          return;
-        }
-      } catch {
-        toast.error('자재 확인 중 오류가 발생했습니다.');
-        setIsTransitioning(false);
-        return;
-      }
-      setIsTransitioning(false);
-    }
-
-    // 부족 없거나 다른 상태 전이 → 바로 진행
+    // 상태 전이 실행
     await executeTransition(newStatus);
   };
 
@@ -103,19 +68,6 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
     }
   };
 
-  const handleShortageConfirm = async () => {
-    setShowShortageDialog(false);
-    if (pendingTransition) {
-      await executeTransition(pendingTransition);
-      setPendingTransition(null);
-    }
-  };
-
-  const handleShortageCancel = () => {
-    setShowShortageDialog(false);
-    setPendingTransition(null);
-  };
-
   const handleCancel = async () => {
     setIsTransitioning(true);
     try {
@@ -123,12 +75,12 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success('수주가 취소되었습니다.');
+        toast.success('주문이 취소되었습니다.');
         setShowCancelDialog(false);
         router.refresh();
       }
     } catch {
-      toast.error('수주 취소 중 오류가 발생했습니다.');
+      toast.error('주문 취소 중 오류가 발생했습니다.');
     } finally {
       setIsTransitioning(false);
     }
@@ -163,7 +115,7 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
 
       {/* 프로그레스 인디케이터 */}
       {currentStatus !== 'cancelled' && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+        <div className="flex items-center gap-2 overflow-x-auto py-3">
           {normalStatuses.map((status, index) => {
             const isPast = index < currentIndex;
             const isCurrent = index === currentIndex;
@@ -237,7 +189,7 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
             />
           </svg>
           <span className="text-sm font-medium text-red-600 dark:text-red-400">
-            이 수주는 취소되었습니다
+            이 주문는 취소되었습니다
           </span>
         </div>
       )}
@@ -268,7 +220,7 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
               onClick={() => setShowCancelDialog(true)}
               disabled={isTransitioning}
             >
-              수주 취소
+              주문 취소
             </Button>
           )}
         </div>
@@ -278,9 +230,9 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>수주 취소</DialogTitle>
+            <DialogTitle>주문 취소</DialogTitle>
             <DialogDescription>
-              정말 이 수주를 취소하시겠습니까? 취소 후에는 되돌릴 수 없습니다.
+              정말 이 주문을 취소하시겠습니까? 취소 후에는 되돌릴 수 없습니다.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -306,20 +258,12 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
               onClick={handleCancel}
               disabled={isTransitioning}
             >
-              {isTransitioning ? '처리 중...' : '수주 취소'}
+              {isTransitioning ? '처리 중...' : '주문 취소'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* 자재 부족 경고 다이얼로그 */}
-      <ShortageAlertDialog
-        open={showShortageDialog}
-        onOpenChange={setShowShortageDialog}
-        shortageItems={shortageItems}
-        onConfirm={handleShortageConfirm}
-        onCancel={handleShortageCancel}
-      />
     </div>
   );
 }

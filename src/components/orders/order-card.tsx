@@ -6,7 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
+  LEGACY_STATUS_MAP,
+  type OrderStatus,
 } from '@/lib/schemas/order-status';
+
+// DB 상태를 새 상태로 매핑
+function mapStatus(status: string): OrderStatus {
+  return (LEGACY_STATUS_MAP[status] || status) as OrderStatus;
+}
 import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
 
 function formatCurrency(amount: number): string {
@@ -73,9 +80,9 @@ export function OrderCard({
           </div>
           {order.status && !compact && (
             <Badge
-              className={`${ORDER_STATUS_COLORS[order.status]} shrink-0 text-[10px] px-1.5 py-0.5`}
+              className={`${ORDER_STATUS_COLORS[mapStatus(order.status)]} shrink-0 text-[10px] px-1.5 py-0.5`}
             >
-              {ORDER_STATUS_LABELS[order.status]}
+              {ORDER_STATUS_LABELS[mapStatus(order.status)]}
             </Badge>
           )}
         </div>

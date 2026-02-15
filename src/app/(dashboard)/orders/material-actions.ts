@@ -15,7 +15,7 @@ export interface ActionResult<T = unknown> {
   error?: string;
 }
 
-// 수주별 자재 목록 (product join)
+// 주문별 자재 목록 (product join)
 export interface OrderMaterialWithProduct extends OrderMaterialRow {
   product: {
     id: string;
@@ -26,7 +26,7 @@ export interface OrderMaterialWithProduct extends OrderMaterialRow {
   } | null;
 }
 
-// 수주 자재 요약 타입
+// 주문 자재 요약 타입
 export interface OrderMaterialSummary {
   total_planned: number;
   total_held: number;
@@ -35,7 +35,7 @@ export interface OrderMaterialSummary {
 }
 
 /**
- * 수주별 자재 목록 조회 (product join)
+ * 주문별 자재 목록 조회 (product join)
  */
 export async function getOrderMaterials(
   orderId: string
@@ -241,7 +241,7 @@ export async function removeOrderMaterial(id: string): Promise<ActionResult<void
 }
 
 /**
- * 수주의 자재 요약 (총 계획/hold/shortage)
+ * 주문의 자재 요약 (총 계획/hold/shortage)
  */
 export async function getOrderMaterialSummary(
   orderId: string

@@ -75,7 +75,7 @@ export function OrdersViewContainer({
       <Link
         href="/orders/new"
         className="md:hidden fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
-        aria-label="수주 등록"
+        aria-label="주문 등록"
       >
         <Plus className="h-6 w-6" />
       </Link>

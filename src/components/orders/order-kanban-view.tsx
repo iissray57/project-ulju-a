@@ -20,17 +20,14 @@ import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
 /** Main pipeline statuses shown as columns */
 const PIPELINE_STATUSES: OrderStatus[] = [
   'inquiry',
+  'measurement',
   'quotation_sent',
   'confirmed',
-  'measurement_done',
-  'date_fixed',
-  'material_held',
-  'installed',
+  'completed',
 ];
 
 /** Terminal/archive statuses shown collapsed */
 const ARCHIVE_STATUSES: OrderStatus[] = [
-  'settlement_wait',
   'revenue_confirmed',
   'cancelled',
 ];
@@ -38,13 +35,10 @@ const ARCHIVE_STATUSES: OrderStatus[] = [
 // Color mapping for column header dots
 const STATUS_DOT_COLORS: Record<OrderStatus, string> = {
   inquiry: 'bg-purple-500',
+  measurement: 'bg-teal-500',
   quotation_sent: 'bg-blue-500',
   confirmed: 'bg-green-500',
-  measurement_done: 'bg-teal-500',
-  date_fixed: 'bg-cyan-500',
-  material_held: 'bg-orange-500',
-  installed: 'bg-emerald-500',
-  settlement_wait: 'bg-yellow-500',
+  completed: 'bg-emerald-500',
   revenue_confirmed: 'bg-stone-500',
   cancelled: 'bg-red-500',
 };
@@ -133,7 +127,7 @@ function KanbanColumn({
 
         {orders.length === 0 && (
           <div className="flex items-center justify-center h-20 text-xs text-muted-foreground">
-            수주 없음
+            주문 없음
           </div>
         )}
       </div>

@@ -35,6 +35,7 @@ export function NewOrderBottomSheet() {
   // 폼 상태
   const [closetType, setClosetType] = useState<string>('');
   const [quotationAmount, setQuotationAmount] = useState('');
+  const [measurementDate, setMeasurementDate] = useState('');
 
   // 고객 검색 debounced
   useEffect(() => {
@@ -64,6 +65,7 @@ export function NewOrderBottomSheet() {
     setSelectedCustomer(null);
     setClosetType('');
     setQuotationAmount('');
+    setMeasurementDate('');
   };
 
   const handleSubmit = async () => {
@@ -80,6 +82,7 @@ export function NewOrderBottomSheet() {
           (closetType as 'angle' | 'system' | 'mixed' | undefined) || undefined,
         quotation_amount: Number(quotationAmount) || 0,
         confirmed_amount: 0,
+        measurement_date: measurementDate,
       });
 
       if (result.error) {
@@ -87,7 +90,7 @@ export function NewOrderBottomSheet() {
         return;
       }
 
-      toast.success('수주가 등록되었습니다');
+      toast.success('주문이 등록되었습니다');
       setOpen(false);
       resetForm();
       if (result.data) {
@@ -111,14 +114,14 @@ export function NewOrderBottomSheet() {
         <Button
           className="md:hidden fixed bottom-20 right-6 z-50 h-14 w-14 rounded-full shadow-lg"
           size="icon"
-          aria-label="빠른 수주 등록"
+          aria-label="빠른 주문 등록"
         >
           <Plus className="h-6 w-6" />
         </Button>
       </SheetTrigger>
       <SheetContent side="bottom" className="rounded-t-2xl">
         <SheetHeader>
-          <SheetTitle>빠른 수주 등록</SheetTitle>
+          <SheetTitle>빠른 주문 등록</SheetTitle>
         </SheetHeader>
         <div className="space-y-4 py-4">
           {/* 고객 선택 */}
@@ -195,13 +198,23 @@ export function NewOrderBottomSheet() {
             />
           </div>
 
+          {/* 실측일 (필수) */}
+          <div className="space-y-2">
+            <Label>실측일 <span className="text-destructive">*</span></Label>
+            <Input
+              type="date"
+              value={measurementDate}
+              onChange={(e) => setMeasurementDate(e.target.value)}
+            />
+          </div>
+
           {/* 등록 버튼 */}
           <Button
             className="w-full"
             onClick={handleSubmit}
-            disabled={isSubmitting || !selectedCustomer}
+            disabled={isSubmitting || !selectedCustomer || !measurementDate}
           >
-            {isSubmitting ? '등록 중...' : '수주 등록'}
+            {isSubmitting ? '등록 중...' : '주문 등록'}
           </Button>
         </div>
       </SheetContent>

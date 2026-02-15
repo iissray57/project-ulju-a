@@ -3,8 +3,8 @@
 import { createClient } from '@/lib/supabase/server';
 import type { Database, TablesInsert, TablesUpdate } from '@/lib/database.types';
 import { orderFormSchema, type OrderFormData } from '@/lib/schemas/order';
-import { canTransition } from '@/lib/schemas/order-status';
-import { syncOrderSchedule } from '@/lib/utils/order-schedule-sync';
+import { canTransition, LEGACY_STATUS_MAP, type OrderStatus as NewOrderStatus } from '@/lib/schemas/order-status';
+import { syncOrderSchedule, syncOrderDateChange } from '@/lib/utils/order-schedule-sync';
 import { revalidatePath } from 'next/cache';
 
 type OrderRow = Database['public']['Tables']['orders']['Row'];
@@ -37,7 +37,7 @@ export interface ActionResult<T = unknown> {
 }
 
 /**
- * 수주 목록 조회 (상태 필터, 검색, 페이지네이션 지원)
+ * 주문 목록 조회 (상태 필터, 검색, 페이지네이션 지원)
  */
 export async function getOrders(
   params: GetOrdersParams = {}
@@ -92,7 +92,7 @@ export async function getOrders(
     return { data: data as OrderWithCustomer[], count: count ?? 0 };
   } catch (err) {
     console.error('[getOrders] Unexpected error:', err);
-    return { error: '수주 목록 조회 중 오류가 발생했습니다.' };
+    return { error: '주문 목록 조회 중 오류가 발생했습니다.' };
   }
 }
 
@@ -128,18 +128,18 @@ export async function getOrder(id: string): Promise<ActionResult<OrderWithCustom
     }
 
     if (!data) {
-      return { error: '수주를 찾을 수 없습니다.' };
+      return { error: '주문을 찾을 수 없습니다.' };
     }
 
     return { data: data as OrderWithCustomer };
   } catch (err) {
     console.error('[getOrder] Unexpected error:', err);
-    return { error: '수주 조회 중 오류가 발생했습니다.' };
+    return { error: '주문 조회 중 오류가 발생했습니다.' };
   }
 }
 
 /**
- * 수주 생성 (자동 채번)
+ * 주문 생성 (자동 채번)
  */
 export async function createOrder(
   formData: OrderFormData
@@ -167,7 +167,7 @@ export async function createOrder(
 
     if (rpcError || !orderNumber) {
       console.error('[createOrder] RPC error:', rpcError);
-      return { error: '수주번호 생성에 실패했습니다.' };
+      return { error: '주문번호 생성에 실패했습니다.' };
     }
 
     // INSERT
@@ -179,8 +179,8 @@ export async function createOrder(
       closet_spec: parsed.data.closet_spec ?? null,
       quotation_amount: parsed.data.quotation_amount,
       confirmed_amount: parsed.data.confirmed_amount,
-      measurement_date: parsed.data.measurement_date ?? null,
-      installation_date: parsed.data.installation_date ?? null,
+      measurement_date: parsed.data.measurement_date || null,
+      installation_date: parsed.data.installation_date || null,
       site_address: parsed.data.site_address ?? null,
       site_memo: parsed.data.site_memo ?? null,
       memo: parsed.data.memo ?? null,
@@ -202,12 +202,12 @@ export async function createOrder(
     return { data };
   } catch (err) {
     console.error('[createOrder] Unexpected error:', err);
-    return { error: '수주 생성 중 오류가 발생했습니다.' };
+    return { error: '주문 생성 중 오류가 발생했습니다.' };
   }
 }
 
 /**
- * 수주 수정
+ * 주문 수정
  */
 export async function updateOrder(
   id: string,
@@ -241,10 +241,10 @@ export async function updateOrder(
         confirmed_amount: parsed.data.confirmed_amount,
       }),
       ...(parsed.data.measurement_date !== undefined && {
-        measurement_date: parsed.data.measurement_date ?? null,
+        measurement_date: parsed.data.measurement_date || null,
       }),
       ...(parsed.data.installation_date !== undefined && {
-        installation_date: parsed.data.installation_date ?? null,
+        installation_date: parsed.data.installation_date || null,
       }),
       ...(parsed.data.site_address !== undefined && {
         site_address: parsed.data.site_address ?? null,
@@ -270,20 +270,31 @@ export async function updateOrder(
     }
 
     if (!data) {
-      return { error: '수주를 찾을 수 없습니다.' };
+      return { error: '주문을 찾을 수 없습니다.' };
+    }
+
+    // 날짜 변경 시 스케줄 동기화
+    if (parsed.data.measurement_date !== undefined || parsed.data.installation_date !== undefined) {
+      await syncOrderDateChange(id, {
+        order_number: data.order_number,
+        measurement_date: data.measurement_date,
+        installation_date: data.installation_date,
+        site_address: data.site_address,
+      });
     }
 
     revalidatePath('/orders');
     revalidatePath(`/orders/${id}`);
+    revalidatePath('/schedule');
     return { data };
   } catch (err) {
     console.error('[updateOrder] Unexpected error:', err);
-    return { error: '수주 수정 중 오류가 발생했습니다.' };
+    return { error: '주문 수정 중 오류가 발생했습니다.' };
   }
 }
 
 /**
- * 수주 삭제 (inquiry 상태에서만 가능)
+ * 주문 삭제 (inquiry 상태에서만 가능)
  */
 export async function deleteOrder(id: string): Promise<ActionResult<void>> {
   try {
@@ -306,7 +317,7 @@ export async function deleteOrder(id: string): Promise<ActionResult<void>> {
 
     if (fetchError || !order) {
       console.error('[deleteOrder] Fetch error:', fetchError);
-      return { error: '수주를 찾을 수 없습니다.' };
+      return { error: '주문을 찾을 수 없습니다.' };
     }
 
     // inquiry 상태가 아니면 삭제 불가
@@ -332,12 +343,12 @@ export async function deleteOrder(id: string): Promise<ActionResult<void>> {
     return { data: undefined };
   } catch (err) {
     console.error('[deleteOrder] Unexpected error:', err);
-    return { error: '수주 삭제 중 오류가 발생했습니다.' };
+    return { error: '주문 삭제 중 오류가 발생했습니다.' };
   }
 }
 
 /**
- * 수주 상태 전이
+ * 주문 상태 전이
  * - ORDER_TRANSITIONS 규칙에 따라 전이 가능 여부 검증
  * - cancelled로 전이: cancel_order_cascade RPC 호출
  * - material_held로 전이: hold_materials_for_order RPC 호출
@@ -346,7 +357,7 @@ export async function deleteOrder(id: string): Promise<ActionResult<void>> {
  */
 export async function transitionOrderStatus(
   orderId: string,
-  newStatus: OrderStatus
+  newStatus: NewOrderStatus
 ): Promise<ActionResult<OrderRow>> {
   try {
     const supabase = await createClient();
@@ -368,10 +379,11 @@ export async function transitionOrderStatus(
 
     if (fetchError || !order) {
       console.error('[transitionOrderStatus] Fetch error:', fetchError);
-      return { error: '수주를 찾을 수 없습니다.' };
+      return { error: '주문을 찾을 수 없습니다.' };
     }
 
-    const currentStatus = order.status;
+    // DB 상태를 새 상태로 매핑
+    const currentStatus = (LEGACY_STATUS_MAP[order.status] || order.status) as NewOrderStatus;
 
     // 전이 가능 여부 검증
     if (!canTransition(currentStatus, newStatus)) {
@@ -389,27 +401,33 @@ export async function transitionOrderStatus(
 
       if (rpcError) {
         console.error('[transitionOrderStatus] cancel_order_cascade error:', rpcError);
-        return { error: '수주 취소 처리 중 오류가 발생했습니다.' };
+        return { error: '주문 취소 처리 중 오류가 발생했습니다.' };
       }
-    } else if (newStatus === 'material_held') {
-      // hold_materials_for_order RPC 호출
-      const { error: rpcError } = await supabase.rpc('hold_materials_for_order', {
-        p_order_id: orderId,
-      });
-
-      if (rpcError) {
-        console.error('[transitionOrderStatus] hold_materials_for_order error:', rpcError);
-        return { error: '자재 준비 처리 중 오류가 발생했습니다.' };
-      }
-    } else if (newStatus === 'installed') {
-      // dispatch_materials_for_order RPC 호출
+    } else if (newStatus === 'completed') {
+      // 작업 완료 시 자재 출고 처리
       const { error: rpcError } = await supabase.rpc('dispatch_materials_for_order', {
         p_order_id: orderId,
       });
 
       if (rpcError) {
         console.error('[transitionOrderStatus] dispatch_materials_for_order error:', rpcError);
-        return { error: '자재 출고 처리 중 오류가 발생했습니다.' };
+        // 자재 출고 실패해도 상태는 변경 (경고만 표시)
+        console.warn('자재 출고에 실패했으나 상태는 변경됩니다.');
+      }
+
+      // 상태 업데이트
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId)
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error('[transitionOrderStatus] Update error:', updateError);
+        return { error: updateError.message };
       }
     } else {
       // 일반 전이: 직접 status UPDATE

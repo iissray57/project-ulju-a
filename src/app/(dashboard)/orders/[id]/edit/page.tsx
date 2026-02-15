@@ -41,20 +41,20 @@ export default async function EditOrderPage({ params }: EditOrderPageProps) {
     closet_spec: parsedClosetSpec,
     quotation_amount: order.quotation_amount ?? 0,
     confirmed_amount: order.confirmed_amount ?? 0,
-    measurement_date: order.measurement_date ?? undefined,
-    installation_date: order.installation_date ?? undefined,
-    site_address: order.site_address ?? undefined,
-    site_memo: order.site_memo ?? undefined,
-    memo: order.memo ?? undefined,
+    measurement_date: order.measurement_date ?? '',
+    installation_date: order.installation_date ?? '',
+    site_address: order.site_address ?? '',
+    site_memo: order.site_memo ?? '',
+    memo: order.memo ?? '',
   };
 
   return (
     <div className="container max-w-4xl mx-auto py-8">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">수주 수정</h1>
+          <h1 className="text-3xl font-bold">주문 수정</h1>
           <p className="text-muted-foreground mt-2">
-            수주번호: {order.order_number}
+            주문번호: {order.order_number}
           </p>
         </div>
         <OrderForm orderId={id} defaultValues={defaultValues} />

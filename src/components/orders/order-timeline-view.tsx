@@ -53,16 +53,16 @@ function formatCurrency(amount: number): string {
 function getPrimaryDate(order: OrderWithCustomer): string | null {
   const status = order.status as OrderStatus;
 
-  // measurement_done 이상이면 installation_date 우선
+  // 확정 이후면 installation_date 우선
   if (
-    ['measurement_done', 'date_fixed', 'material_held', 'installed'].includes(status) &&
+    ['confirmed', 'completed'].includes(status) &&
     order.installation_date
   ) {
     return `설치: ${new Date(order.installation_date).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}`;
   }
 
-  // confirmed 이상이면 measurement_date 우선
-  if (['confirmed', 'measurement_done'].includes(status) && order.measurement_date) {
+  // 견적 발송 이전이면 measurement_date 우선
+  if (['inquiry', 'measurement', 'quotation_sent'].includes(status) && order.measurement_date) {
     return `실측: ${new Date(order.measurement_date).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}`;
   }
 
@@ -76,7 +76,7 @@ export function OrderTimelineView({ orders }: OrderTimelineViewProps) {
   if (orders.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        표시할 수주가 없습니다
+        표시할 주문이 없습니다
       </div>
     );
   }
@@ -101,14 +101,14 @@ export function OrderTimelineView({ orders }: OrderTimelineViewProps) {
                   {/* 타임라인 도트 */}
                   <div className="absolute -left-[calc(1.5rem+5px)] top-2 w-3 h-3 rounded-full bg-primary" />
 
-                  {/* 수주 카드 */}
+                  {/* 주문 카드 */}
                   <Card
                     className="p-4 cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => router.push(`/orders/${order.id}`)}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-2 flex-1">
-                        {/* 수주번호 + 고객명 */}
+                        {/* 주문번호 + 고객명 */}
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-mono text-muted-foreground">
                             {order.order_number}

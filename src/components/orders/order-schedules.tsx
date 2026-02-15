@@ -72,7 +72,7 @@ export async function OrderSchedules({ orderId }: OrderSchedulesProps) {
     return null;
   }
 
-  // 해당 수주의 활성 스케줄 조회
+  // 해당 주문의 활성 스케줄 조회
   const { data: schedules, error } = await supabase
     .from('schedules')
     .select('*')

@@ -23,7 +23,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">수주 관리</h1>
+          <h1 className="text-3xl font-bold">주문 관리</h1>
         </div>
         <div className="text-center py-12 text-destructive">{result.error}</div>
       </div>
@@ -37,13 +37,13 @@ export default async function OrdersPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">수주 관리</h1>
+          <h1 className="text-3xl font-bold">주문 관리</h1>
           <p className="text-muted-foreground mt-2">
-            총 {total}건의 수주가 등록되어 있습니다
+            총 {total}건의 주문이 등록되어 있습니다
           </p>
         </div>
         <Button asChild className="hidden md:flex">
-          <Link href="/orders/new">수주 등록</Link>
+          <Link href="/orders/new">주문 등록</Link>
         </Button>
       </div>
 

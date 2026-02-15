@@ -18,8 +18,14 @@ import {
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
+  LEGACY_STATUS_MAP,
   type OrderStatus,
 } from '@/lib/schemas/order-status';
+
+// DB 상태를 새 상태로 매핑
+function mapStatus(status: string): OrderStatus {
+  return (LEGACY_STATUS_MAP[status] || status) as OrderStatus;
+}
 import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
 
 interface OrderListProps {
@@ -30,10 +36,10 @@ interface OrderListProps {
 const STATUS_FILTERS: { label: string; value: OrderStatus | 'all' }[] = [
   { label: '전체', value: 'all' },
   { label: '의뢰', value: 'inquiry' },
+  { label: '실측', value: 'measurement' },
   { label: '견적발송', value: 'quotation_sent' },
   { label: '확정', value: 'confirmed' },
-  { label: '진행중', value: 'date_fixed' },
-  { label: '완료', value: 'installed' },
+  { label: '완료', value: 'completed' },
   { label: '취소', value: 'cancelled' },
 ];
 
@@ -115,7 +121,7 @@ export function OrderList({ orders, total }: OrderListProps) {
       {/* Search Input */}
       <div className="flex gap-3">
         <Input
-          placeholder="수주번호, 고객명으로 검색..."
+          placeholder="주문번호, 고객명으로 검색..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="max-w-md"
@@ -127,9 +133,9 @@ export function OrderList({ orders, total }: OrderListProps) {
         {orders.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center space-y-4">
-              <p className="text-muted-foreground">등록된 수주가 없습니다</p>
+              <p className="text-muted-foreground">등록된 주문이 없습니다</p>
               <Button asChild>
-                <Link href="/orders/new">수주 등록</Link>
+                <Link href="/orders/new">주문 등록</Link>
               </Button>
             </CardContent>
           </Card>
@@ -151,8 +157,8 @@ export function OrderList({ orders, total }: OrderListProps) {
                     </div>
                   </div>
                   {order.status && (
-                    <Badge className={ORDER_STATUS_COLORS[order.status]}>
-                      {ORDER_STATUS_LABELS[order.status]}
+                    <Badge className={ORDER_STATUS_COLORS[mapStatus(order.status)]}>
+                      {ORDER_STATUS_LABELS[mapStatus(order.status)]}
                     </Badge>
                   )}
                 </div>
@@ -188,7 +194,7 @@ export function OrderList({ orders, total }: OrderListProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>수주번호</TableHead>
+              <TableHead>주문번호</TableHead>
               <TableHead>고객명</TableHead>
               <TableHead>유형</TableHead>
               <TableHead className="text-right">견적액</TableHead>
@@ -202,9 +208,9 @@ export function OrderList({ orders, total }: OrderListProps) {
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12">
                   <div className="space-y-4">
-                    <p className="text-muted-foreground">등록된 수주가 없습니다</p>
+                    <p className="text-muted-foreground">등록된 주문이 없습니다</p>
                     <Button asChild>
-                      <Link href="/orders/new">수주 등록</Link>
+                      <Link href="/orders/new">주문 등록</Link>
                     </Button>
                   </div>
                 </TableCell>
@@ -229,8 +235,8 @@ export function OrderList({ orders, total }: OrderListProps) {
                   </TableCell>
                   <TableCell>
                     {order.status ? (
-                      <Badge className={ORDER_STATUS_COLORS[order.status]}>
-                        {ORDER_STATUS_LABELS[order.status]}
+                      <Badge className={ORDER_STATUS_COLORS[mapStatus(order.status)]}>
+                        {ORDER_STATUS_LABELS[mapStatus(order.status)]}
                       </Badge>
                     ) : (
                       '-'

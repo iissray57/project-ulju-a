@@ -4,9 +4,9 @@
 -- 기존 중복 데이터 정리 (가장 오래된 것만 유지)
 DELETE FROM customers
 WHERE id NOT IN (
-  SELECT MIN(id)
+  SELECT DISTINCT ON (user_id, name, COALESCE(phone, '')) id
   FROM customers
-  GROUP BY user_id, name, COALESCE(phone, '')
+  ORDER BY user_id, name, COALESCE(phone, ''), created_at ASC
 );
 
 -- 유니크 제약 추가

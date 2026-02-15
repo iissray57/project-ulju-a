@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Grid, OrbitControls, OrthographicCamera } from '@react-three/drei';
+import { Grid, MapControls, OrthographicCamera } from '@react-three/drei';
 import { useTheme } from 'next-themes';
 import { useEditorState, useEditorDispatch } from './editor-context';
 import { ClosetComponentMesh } from './closet-component-mesh';
 import { DimensionLabel } from './dimension-label';
-import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+import type { MapControls as MapControlsImpl } from 'three-stdlib';
 
 function Scene() {
   const {
@@ -22,7 +22,7 @@ function Scene() {
   } = useEditorState();
   const dispatch = useEditorDispatch();
   const { resolvedTheme } = useTheme();
-  const controlsRef = useRef<OrbitControlsImpl>(null);
+  const controlsRef = useRef<MapControlsImpl>(null);
 
   const isDark = resolvedTheme === 'dark';
 
@@ -65,13 +65,12 @@ function Scene() {
         key={`ortho-${cameraResetCounter}`}
       />
 
-      <OrbitControls
+      <MapControls
         ref={controlsRef}
         enableRotate={false}
         enablePan
         enableZoom
-        maxPolarAngle={0}
-        minPolarAngle={0}
+        screenSpacePanning
         minZoom={20}
         maxZoom={300}
       />

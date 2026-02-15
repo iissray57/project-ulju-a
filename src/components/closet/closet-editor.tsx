@@ -54,25 +54,27 @@ function captureCanvasThumbnail(): string | null {
 // ── FrameSizeDialog ─────────────────────────────────────────
 
 const FRAME_PRESETS = [
-  { label: '소형 (1200×400)', width: 1200, depth: 400 },
-  { label: '중형 (1800×600)', width: 1800, depth: 600 },
-  { label: '대형 (2400×600)', width: 2400, depth: 600 },
-  { label: '와이드 (3000×600)', width: 3000, depth: 600 },
+  { label: '소형 (1800×1200)', width: 1800, depth: 1200 },
+  { label: '중형 (2400×1500)', width: 2400, depth: 1500 },
+  { label: '대형 (3000×2000)', width: 3000, depth: 2000 },
+  { label: '넓은방 (4000×3000)', width: 4000, depth: 3000 },
 ];
 
 function FrameSizeDialog({ onConfirm }: { onConfirm: (w: number, d: number) => void }) {
-  const [frameWidth, setFrameWidth] = useState(2400);
-  const [frameDepth, setFrameDepth] = useState(600);
+  const [widthStr, setWidthStr] = useState('2400');
+  const [depthStr, setDepthStr] = useState('1500');
+  const frameWidth = parseInt(widthStr, 10) || 0;
+  const frameDepth = parseInt(depthStr, 10) || 0;
 
   return (
     <Dialog open onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>작업 영역 설정</DialogTitle>
+          <DialogTitle>방 크기 설정</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <p className="text-sm text-muted-foreground">
-            프레임 크기를 설정해주세요. 이 프레임 안에 부품을 배치합니다.
+            설치 공간의 크기를 설정해주세요. 이 영역 안에 프레임을 배치합니다.
           </p>
           <div className="grid grid-cols-2 gap-2">
             {FRAME_PRESETS.map((p) => (
@@ -82,7 +84,7 @@ function FrameSizeDialog({ onConfirm }: { onConfirm: (w: number, d: number) => v
                 variant={frameWidth === p.width && frameDepth === p.depth ? 'secondary' : 'outline'}
                 size="sm"
                 className="text-xs"
-                onClick={() => { setFrameWidth(p.width); setFrameDepth(p.depth); }}
+                onClick={() => { setWidthStr(String(p.width)); setDepthStr(String(p.depth)); }}
               >
                 {p.label}
               </Button>
@@ -93,8 +95,9 @@ function FrameSizeDialog({ onConfirm }: { onConfirm: (w: number, d: number) => v
               <Label className="text-xs">가로 (mm)</Label>
               <Input
                 type="number"
-                value={frameWidth}
-                onChange={(e) => setFrameWidth(Number(e.target.value) || 0)}
+                value={widthStr}
+                onChange={(e) => setWidthStr(e.target.value)}
+                onFocus={(e) => e.target.select()}
                 min={100}
                 max={10000}
                 className="h-8"
@@ -104,8 +107,9 @@ function FrameSizeDialog({ onConfirm }: { onConfirm: (w: number, d: number) => v
               <Label className="text-xs">세로 (mm)</Label>
               <Input
                 type="number"
-                value={frameDepth}
-                onChange={(e) => setFrameDepth(Number(e.target.value) || 0)}
+                value={depthStr}
+                onChange={(e) => setDepthStr(e.target.value)}
+                onFocus={(e) => e.target.select()}
                 min={100}
                 max={10000}
                 className="h-8"

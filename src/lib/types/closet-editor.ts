@@ -31,6 +31,21 @@ export interface EditorState {
   zoom: number;
 }
 
+export function createFrame(width: number, depth: number): ClosetComponent {
+  return {
+    id: 'default-frame',
+    name: '방 영역',
+    shapeType: 'rect',
+    position: [0, 0, 0],
+    rotation: [0, 0, 0],
+    scale: [1, 1, 1],
+    dimensions: { width, height: 100, depth },
+    color: '#f8fafc',
+    borderColor: '#64748b',
+    locked: true,
+  };
+}
+
 export const DEFAULT_EDITOR_STATE: EditorState = {
   components: [],
   selectedId: null,

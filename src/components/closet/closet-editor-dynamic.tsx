@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 
 interface ClosetEditorDynamicProps {
   orderId?: string;
+  modelId?: string;
 }
 
 const ClosetEditorLazy = dynamic(
@@ -21,6 +22,6 @@ const ClosetEditorLazy = dynamic(
   }
 );
 
-export function ClosetEditorDynamic({ orderId }: ClosetEditorDynamicProps) {
-  return <ClosetEditorLazy orderId={orderId} />;
+export function ClosetEditorDynamic({ orderId, modelId }: ClosetEditorDynamicProps) {
+  return <ClosetEditorLazy orderId={orderId} modelId={modelId} />;
 }

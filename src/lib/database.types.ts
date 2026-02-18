@@ -509,6 +509,81 @@ export type Database = {
           },
         ]
       }
+      outsource_orders: {
+        Row: {
+          amount: number
+          completed_date: string | null
+          created_at: string
+          due_date: string | null
+          elevation_image_url: string | null
+          id: string
+          memo: string | null
+          order_id: string
+          outsource_number: string
+          outsource_type: string
+          plan_image_url: string | null
+          requested_date: string | null
+          spec_summary: string | null
+          status: string
+          supplier_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          completed_date?: string | null
+          created_at?: string
+          due_date?: string | null
+          elevation_image_url?: string | null
+          id?: string
+          memo?: string | null
+          order_id: string
+          outsource_number: string
+          outsource_type: string
+          plan_image_url?: string | null
+          requested_date?: string | null
+          spec_summary?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          completed_date?: string | null
+          created_at?: string
+          due_date?: string | null
+          elevation_image_url?: string | null
+          id?: string
+          memo?: string | null
+          order_id?: string
+          outsource_number?: string
+          outsource_type?: string
+          plan_image_url?: string | null
+          requested_date?: string | null
+          spec_summary?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outsource_orders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outsource_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolios: {
         Row: {
           category: string
@@ -1014,6 +1089,7 @@ export type Database = {
         Returns: Json
       }
       generate_order_number: { Args: never; Returns: string }
+      generate_outsource_number: { Args: never; Returns: string }
       generate_po_number: { Args: never; Returns: string }
       hold_materials_for_order: {
         Args: { p_mode?: string; p_order_id: string }

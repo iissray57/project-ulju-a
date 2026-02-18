@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     // outsource PDF 생성
     const outsourceOrderId = searchParams.get('outsourceOrderId');
     if (type === 'outsource' && outsourceOrderId) {
-      const outsourceResult = await generateOutsourceOrderPDF(supabase, outsourceOrderId);
+      const outsourceResult = await generateOutsourceOrderPDF(supabase, user.id, outsourceOrderId);
 
       if ('error' in outsourceResult) {
         return NextResponse.json({ error: outsourceResult.error }, { status: 400 });
@@ -368,11 +368,13 @@ async function generateTestPDF() {
 /**
  * 외주 발주서 PDF 생성
  * @param supabase - Supabase client
+ * @param userId - 사용자 ID
  * @param outsourceOrderId - 외주 발주 ID
  * @returns { buffer, filename } 또는 { error }
  */
 async function generateOutsourceOrderPDF(
   supabase: SupabaseClient,
+  userId: string,
   outsourceOrderId: string
 ): Promise<{ buffer: Buffer; filename: string } | { error: string }> {
   try {
@@ -384,6 +386,7 @@ async function generateOutsourceOrderPDF(
         order:orders(customer:customers(name, address))
       `)
       .eq('id', outsourceOrderId)
+      .eq('user_id', userId)
       .single();
 
     if (error || !data) {

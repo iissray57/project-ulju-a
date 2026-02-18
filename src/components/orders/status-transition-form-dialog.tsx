@@ -108,7 +108,11 @@ export function StatusTransitionFormDialog({
     if (open && isQuotationTransition) {
       setReadinessLoaded(false);
       getOrderReadiness(order.id).then((result) => {
-        setReadiness(result);
+        if ('error' in result) {
+          setReadiness(null);
+        } else {
+          setReadiness(result);
+        }
         setReadinessLoaded(true);
       });
     }
@@ -119,7 +123,11 @@ export function StatusTransitionFormDialog({
     if (open && isSettlementWaitTransition) {
       setOutsourceSummaryLoaded(false);
       getOutsourceOrderSummary(order.id).then((result) => {
-        setOutsourceSummary(result);
+        if ('error' in result) {
+          setOutsourceSummary(null);
+        } else {
+          setOutsourceSummary(result);
+        }
         setOutsourceSummaryLoaded(true);
       });
     }

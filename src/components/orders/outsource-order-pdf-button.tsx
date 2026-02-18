@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Download, Copy, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { getOutsourceOrder } from '@/app/(dashboard)/orders/outsource-actions';
 
 interface OutsourceOrderPDFButtonProps {
@@ -35,6 +36,7 @@ export function OutsourceOrderPDFButton({
       const res = await fetch(url);
       if (!res.ok) {
         console.error('[OutsourceOrderPDFButton] PDF 다운로드 실패:', res.status);
+        toast.error('PDF 다운로드에 실패했습니다.');
         return;
       }
       const blob = await res.blob();
@@ -48,6 +50,7 @@ export function OutsourceOrderPDFButton({
       URL.revokeObjectURL(objectUrl);
     } catch (err) {
       console.error('[OutsourceOrderPDFButton] PDF 다운로드 오류:', err);
+      toast.error('PDF 다운로드에 실패했습니다.');
     } finally {
       setIsDownloading(false);
     }
@@ -59,6 +62,7 @@ export function OutsourceOrderPDFButton({
       const result = await getOutsourceOrder(outsourceOrderId);
       if (result.error || !result.data) {
         console.error('[OutsourceOrderPDFButton] 데이터 조회 실패:', result.error);
+        toast.error('클립보드 복사에 실패했습니다.');
         return;
       }
       const d = result.data;
@@ -82,9 +86,11 @@ export function OutsourceOrderPDFButton({
 
       await navigator.clipboard.writeText(text);
       setCopied(true);
+      toast.success('클립보드에 복사되었습니다.');
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('[OutsourceOrderPDFButton] 클립보드 복사 오류:', err);
+      toast.error('클립보드 복사에 실패했습니다.');
     } finally {
       setIsCopying(false);
     }

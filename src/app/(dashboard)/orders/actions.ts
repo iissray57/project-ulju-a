@@ -510,18 +510,27 @@ export async function getOutsourceOrderSummary(orderId: string): Promise<{
   total: number;
   completed: number;
   incomplete: number;
-}> {
+} | { error: string }> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: '인증이 필요합니다.' };
+  }
 
   const [totalResult, incompleteResult] = await Promise.all([
     supabase
       .from('outsource_orders')
       .select('id', { count: 'exact', head: true })
-      .eq('order_id', orderId),
+      .eq('order_id', orderId)
+      .eq('user_id', user.id),
     supabase
       .from('outsource_orders')
       .select('id', { count: 'exact', head: true })
       .eq('order_id', orderId)
+      .eq('user_id', user.id)
       .not('status', 'in', '("completed","cancelled")'),
   ]);
 
@@ -540,14 +549,22 @@ export async function getOrderReadiness(orderId: string): Promise<{
   hasMaterials: boolean;
   modelCount: number;
   materialCount: number;
-}> {
+} | { error: string }> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: '인증이 필요합니다.' };
+  }
 
   const [modelsResult, materialsResult] = await Promise.all([
     supabase
       .from('closet_models')
       .select('id', { count: 'exact', head: true })
-      .eq('order_id', orderId),
+      .eq('order_id', orderId)
+      .eq('user_id', user.id),
     supabase
       .from('order_materials')
       .select('id', { count: 'exact', head: true })

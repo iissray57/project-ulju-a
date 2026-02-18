@@ -18,6 +18,9 @@ export function OrderCostSummaryCard({ orderId }: OrderCostSummaryProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setData(null);
+    setError(null);
+    setLoading(true);
     getOrderCostSummary(orderId).then((result) => {
       if (result.error) {
         setError(result.error);

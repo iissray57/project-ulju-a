@@ -245,10 +245,10 @@ export async function updateOutsourceOrder(
       updated_at: new Date().toISOString(),
     };
 
-    // order_id 확인용 조회
+    // order_id 및 status 확인용 조회
     const { data: existing, error: fetchError } = await supabase
       .from('outsource_orders')
-      .select('order_id')
+      .select('order_id, status')
       .eq('id', id)
       .eq('user_id', user.id)
       .single();
@@ -256,6 +256,10 @@ export async function updateOutsourceOrder(
     if (fetchError || !existing) {
       console.error('[updateOutsourceOrder] Fetch error:', fetchError);
       return { error: '외주 발주를 찾을 수 없습니다.' };
+    }
+
+    if (existing.status === 'completed' || existing.status === 'cancelled') {
+      return { error: '완료 또는 취소된 외주 발주는 수정할 수 없습니다.' };
     }
 
     const { data, error } = await supabase
@@ -436,8 +440,11 @@ export async function getOutsourceOrderSummary(
 
     const total = data.length;
     const completed = data.filter((r) => r.status === 'completed').length;
-    const totalAmount = data.reduce((sum, r) => sum + (r.amount ?? 0), 0);
-    const allCompleted = total > 0 && completed === total;
+    const settled = data.filter((r) => r.status === 'completed' || r.status === 'cancelled').length;
+    const totalAmount = data
+      .filter((r) => r.status !== 'cancelled')
+      .reduce((sum, r) => sum + (r.amount ?? 0), 0);
+    const allCompleted = total > 0 && settled === total;
 
     return {
       data: {

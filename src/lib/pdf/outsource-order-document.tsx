@@ -200,7 +200,7 @@ export function generateOutsourceOrderDocument(data: OutsourceOrderPDFData) {
       // 도면 이미지 섹션 (URL이 있을 때만 표시)
       outsourceOrder.plan_image_url || outsourceOrder.elevation_image_url
         ? React.createElement(
-            React.Fragment,
+            View,
             null,
             React.createElement(PDFDivider, null),
             React.createElement(

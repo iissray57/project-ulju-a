@@ -12,6 +12,7 @@ import {
   ORDER_STATUS_COLORS,
   type OrderStatus,
 } from '@/lib/schemas/order-status';
+import { formatPhone } from '@/lib/utils';
 import { WORK_TYPE_LABELS, type WorkType } from '@/lib/schemas/order';
 
 interface PageProps {
@@ -36,8 +37,8 @@ export default async function CustomerDetailPage({ params }: PageProps) {
     redirect('/customers');
   }
 
-  const customer = result.data;
-  const orders = customer.orders || [];
+  const customer = result.data!;
+  const orders = customer.orders ?? [];
 
   // 통계 계산 (취소 제외)
   const activeOrders = orders.filter((o) => o.status !== 'cancelled');
@@ -87,7 +88,7 @@ export default async function CustomerDetailPage({ params }: PageProps) {
             </div>
             <div>
               <div className="text-sm text-muted-foreground mb-1">연락처</div>
-              <div className="font-medium">{customer.phone}</div>
+              <div className="font-medium">{formatPhone(customer.phone)}</div>
             </div>
             {customer.address && (
               <div>

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from '@/lib/schemas/order';
+import { formatPhone } from '@/lib/utils';
 
 interface OrderDetailSectionsProps {
   order: OrderWithCustomer;
@@ -70,7 +71,7 @@ export function OrderDetailSections({ order }: OrderDetailSectionsProps) {
             <div>
               <div className="text-sm text-muted-foreground mb-1">연락처</div>
               <div className="font-medium">
-                {order.customer ? order.customer.phone : '미지정'}
+                {order.customer ? formatPhone(order.customer.phone) : '미지정'}
               </div>
             </div>
             {order.site_address && (

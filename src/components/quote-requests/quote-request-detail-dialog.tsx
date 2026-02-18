@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { formatPhone } from '@/lib/utils';
 import {
   updateQuoteRequestStatus,
   updateQuoteRequestNotes,
@@ -173,7 +174,7 @@ export function QuoteRequestDetailDialog({
               </div>
               <div>
                 <span className="text-muted-foreground">연락처</span>
-                <p className="font-medium">{current.customer_phone}</p>
+                <p className="font-medium">{formatPhone(current.customer_phone)}</p>
               </div>
               {current.customer_email && (
                 <div className="col-span-2">

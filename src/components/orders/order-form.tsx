@@ -29,6 +29,7 @@ import { Search, User } from 'lucide-react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import type { Database } from '@/lib/database.types';
+import { formatPhone } from '@/lib/utils';
 
 type Customer = Database['public']['Tables']['customers']['Row'];
 
@@ -159,14 +160,6 @@ export function OrderForm({ orderId, defaultValues }: OrderFormProps) {
     [setValue]
   );
 
-  // 전화번호 포맷
-  const formatPhone = (value: string) => {
-    const num = value.replace(/[^\d]/g, '');
-    if (num.length <= 3) return num;
-    if (num.length <= 7) return `${num.slice(0, 3)}-${num.slice(3)}`;
-    return `${num.slice(0, 3)}-${num.slice(3, 7)}-${num.slice(7, 11)}`;
-  };
-
   const onSubmit = async (data: OrderFormData) => {
     setIsSubmitting(true);
 
@@ -260,7 +253,7 @@ export function OrderForm({ orderId, defaultValues }: OrderFormProps) {
                               <User className="w-5 h-5 text-muted-foreground shrink-0" />
                               <div className="min-w-0 flex-1">
                                 <div className="font-medium">{customer.name}</div>
-                                <div className="text-sm text-muted-foreground">{customer.phone}</div>
+                                <div className="text-sm text-muted-foreground">{formatPhone(customer.phone)}</div>
                                 {customer.address && (
                                   <div className="text-xs text-muted-foreground truncate">{customer.address}</div>
                                 )}

@@ -2,6 +2,7 @@ import React from 'react';
 import { Document, Page, View, Text, Image } from '@react-pdf/renderer';
 import { pdfStyles, PDF_COLORS } from './styles';
 import { PDFHeader, PDFFooter, PDFTable, PDFSection, PDFRow, PDFDivider } from './components';
+import { formatPhone } from '@/lib/utils';
 
 /**
  * 견적서 데이터 타입
@@ -30,7 +31,16 @@ export interface QuotationData {
   }>;
   modelImages?: Array<{
     name: string;
-    thumbnail_url: string;
+    thumbnail_url: string | null;
+    elevation_image_url: string | null;
+    three_d_image_url: string | null;
+  }>;
+  componentSummary?: Array<{
+    category: string;
+    presetType: string | null;
+    width: number;
+    count: number;
+    cornerType: string | null;
   }>;
 }
 
@@ -60,7 +70,7 @@ function formatDate(dateStr: string | null): string {
  * @returns React.ReactElement (React.createElement 사용, JSX 금지)
  */
 export function generateQuotationDocument(data: QuotationData) {
-  const { order, customer, materials, modelImages } = data;
+  const { order, customer, materials, modelImages, componentSummary } = data;
 
   // 금액 계산
   const subtotal = order.total_amount;
@@ -95,7 +105,7 @@ export function generateQuotationDocument(data: QuotationData) {
         PDFSection,
         { title: '고객 정보' },
         React.createElement(PDFRow, { label: '고객명', value: customer.name }),
-        React.createElement(PDFRow, { label: '연락처', value: customer.phone }),
+        React.createElement(PDFRow, { label: '연락처', value: formatPhone(customer.phone) }),
         React.createElement(PDFRow, {
           label: '주소',
           value: customer.address || '-',
@@ -188,21 +198,106 @@ export function generateQuotationDocument(data: QuotationData) {
             React.createElement(
               PDFSection,
               { title: '배치도' },
-              ...modelImages.map((img, idx) =>
-                React.createElement(
-                  View,
-                  { key: idx, style: { marginBottom: 8 } },
+              ...modelImages.flatMap((img, idx) => {
+                const images: React.ReactElement[] = [];
+
+                // 모델 이름 헤더
+                images.push(
                   React.createElement(
                     Text,
-                    { style: [pdfStyles.caption, { marginBottom: 4 }] },
+                    { key: `title-${idx}`, style: [pdfStyles.bodyBold, { marginBottom: 4, marginTop: idx > 0 ? 12 : 0 }] },
                     img.name
-                  ),
-                  React.createElement(Image, {
-                    src: img.thumbnail_url,
-                    style: { width: '100%', maxHeight: 240, objectFit: 'contain' },
-                  })
-                )
-              )
+                  )
+                );
+
+                // 평면도
+                if (img.thumbnail_url) {
+                  images.push(
+                    React.createElement(
+                      View,
+                      { key: `plan-${idx}`, style: { marginBottom: 6 } },
+                      React.createElement(
+                        Text,
+                        { style: [pdfStyles.caption, { marginBottom: 2 }] },
+                        '평면도'
+                      ),
+                      React.createElement(Image, {
+                        src: img.thumbnail_url,
+                        style: { width: '100%', maxHeight: 180, objectFit: 'contain' },
+                      })
+                    )
+                  );
+                }
+
+                // 입면도
+                if (img.elevation_image_url) {
+                  images.push(
+                    React.createElement(
+                      View,
+                      { key: `elev-${idx}`, style: { marginBottom: 6 } },
+                      React.createElement(
+                        Text,
+                        { style: [pdfStyles.caption, { marginBottom: 2 }] },
+                        '입면도'
+                      ),
+                      React.createElement(Image, {
+                        src: img.elevation_image_url,
+                        style: { width: '100%', maxHeight: 180, objectFit: 'contain' },
+                      })
+                    )
+                  );
+                }
+
+                // 3D 모형 (선택)
+                if (img.three_d_image_url) {
+                  images.push(
+                    React.createElement(
+                      View,
+                      { key: `3d-${idx}`, style: { marginBottom: 6 } },
+                      React.createElement(
+                        Text,
+                        { style: [pdfStyles.caption, { marginBottom: 2 }] },
+                        '3D 모형'
+                      ),
+                      React.createElement(Image, {
+                        src: img.three_d_image_url,
+                        style: { width: '100%', maxHeight: 180, objectFit: 'contain' },
+                      })
+                    )
+                  );
+                }
+
+                return images;
+              })
+            ),
+            React.createElement(PDFDivider, null)
+          )
+        : null,
+
+      // 가구 구성 섹션
+      componentSummary && componentSummary.length > 0
+        ? React.createElement(
+            React.Fragment,
+            null,
+            React.createElement(
+              PDFSection,
+              { title: '가구 구성' },
+              React.createElement(PDFTable, {
+                columns: [
+                  { header: '가구종류', key: 'category', width: 2 },
+                  { header: '타입', key: 'presetType', width: 1, align: 'center' as const },
+                  { header: '너비(mm)', key: 'width', width: 1.5, align: 'right' as const },
+                  { header: '수량', key: 'count', width: 1, align: 'center' as const },
+                  { header: '비고', key: 'note', width: 1.5 },
+                ],
+                rows: componentSummary.map((s) => ({
+                  category: s.category,
+                  presetType: s.presetType || '-',
+                  width: s.width.toString(),
+                  count: s.count.toString(),
+                  note: s.cornerType ? `${s.cornerType === 'L' ? 'ㄱ자' : 'ㄴ자'} 코너` : '-',
+                })),
+              })
             ),
             React.createElement(PDFDivider, null)
           )

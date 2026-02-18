@@ -3,6 +3,7 @@ import { Document, Page, View, Text } from '@react-pdf/renderer';
 import { pdfStyles, PDF_COLORS } from './styles';
 import { PDFHeader, PDFFooter, PDFSection, PDFRow, PDFDivider } from './components';
 import type { ChecklistItem } from '@/lib/schemas/checklist';
+import { formatPhone } from '@/lib/utils';
 
 interface ChecklistPDFData {
   order: {
@@ -61,7 +62,7 @@ export function createChecklistDocument(data: ChecklistPDFData) {
         PDFSection,
         { title: '고객 정보' },
         React.createElement(PDFRow, { label: '고객명', value: data.customer.name }),
-        React.createElement(PDFRow, { label: '연락처', value: data.customer.phone }),
+        React.createElement(PDFRow, { label: '연락처', value: formatPhone(data.customer.phone) }),
         React.createElement(PDFRow, { label: '설치예정일', value: installDate })
       ),
 

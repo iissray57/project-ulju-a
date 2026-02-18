@@ -16,6 +16,7 @@ import {
 import { ExportButton } from '@/components/ui/export-button';
 import type { ExportColumn } from '@/lib/utils/export';
 import type { Database } from '@/lib/database.types';
+import { formatPhone } from '@/lib/utils';
 
 type Supplier = Database['public']['Tables']['suppliers']['Row'];
 
@@ -26,7 +27,7 @@ interface SupplierListProps {
 
 const SUPPLIER_EXPORT_COLUMNS: ExportColumn<Supplier>[] = [
   { header: '거래처명', accessor: (r) => r.name },
-  { header: '연락처', accessor: (r) => r.phone },
+  { header: '연락처', accessor: (r) => formatPhone(r.phone) },
   { header: '담당자', accessor: (r) => r.contact_person },
   { header: '사업자번호', accessor: (r) => r.business_number },
   { header: '상태', accessor: (r) => r.is_active === false ? '비활성' : '활성' },
@@ -95,7 +96,7 @@ export function SupplierList({ suppliers, total }: SupplierListProps) {
               <CardContent className="space-y-2">
                 <div className="font-semibold text-lg">{supplier.name}</div>
                 {supplier.phone && (
-                  <div className="text-sm text-muted-foreground">{supplier.phone}</div>
+                  <div className="text-sm text-muted-foreground">{formatPhone(supplier.phone)}</div>
                 )}
                 {supplier.contact_person && (
                   <div className="text-sm text-muted-foreground">
@@ -138,7 +139,7 @@ export function SupplierList({ suppliers, total }: SupplierListProps) {
                   onClick={() => router.push(`/suppliers/${supplier.id}`)}
                 >
                   <TableCell className="font-medium">{supplier.name}</TableCell>
-                  <TableCell>{supplier.phone || '-'}</TableCell>
+                  <TableCell>{formatPhone(supplier.phone) || '-'}</TableCell>
                   <TableCell>{supplier.contact_person || '-'}</TableCell>
                   <TableCell>{supplier.business_number || '-'}</TableCell>
                   <TableCell className="text-center">

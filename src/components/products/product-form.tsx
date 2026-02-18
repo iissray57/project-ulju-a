@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dialog';
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { formatPhone } from '@/lib/utils';
 import { Search, Building2, X } from 'lucide-react';
 
 interface Supplier {
@@ -341,7 +342,7 @@ export function ProductForm({ productId, defaultValues, onSuccess, onCancel }: P
                       <div className="min-w-0 flex-1">
                         <div className="font-medium">{supplier.name}</div>
                         {supplier.phone && (
-                          <div className="text-sm text-muted-foreground">{supplier.phone}</div>
+                          <div className="text-sm text-muted-foreground">{formatPhone(supplier.phone)}</div>
                         )}
                       </div>
                     </div>

@@ -271,7 +271,6 @@ export async function convertToOrder(
           user_id: user.id,
           name: quoteRequest.customer_name,
           phone: quoteRequest.customer_phone,
-          email: quoteRequest.customer_email,
           address: quoteRequest.address,
         })
         .select('id')
@@ -292,20 +291,14 @@ export async function convertToOrder(
       return { error: '주문번호 생성에 실패했습니다.' };
     }
 
-    // 주문 생성
-    const categoryMap: Record<string, string> = {
-      angle: '앵글 옷장',
-      curtain: '커튼',
-      system: '시스템 수납',
-    };
-
+    // 주문 생성 (category → work_type 매핑: angle/curtain/system 그대로 사용)
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
         user_id: user.id,
         order_number: orderNumber,
         customer_id: customerId,
-        work_type: categoryMap[quoteRequest.category] || quoteRequest.category,
+        work_type: quoteRequest.category,
         site_address: quoteRequest.address,
         memo: quoteRequest.description,
         status: 'inquiry',

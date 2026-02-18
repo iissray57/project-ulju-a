@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getSupplier } from '../actions';
 import { DeleteSupplierButton } from '@/components/suppliers/delete-supplier-button';
+import { formatPhone } from '@/lib/utils';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -51,7 +52,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
             {supplier.phone && (
               <div>
                 <div className="text-sm text-muted-foreground mb-1">연락처</div>
-                <div className="font-medium">{supplier.phone}</div>
+                <div className="font-medium">{formatPhone(supplier.phone)}</div>
               </div>
             )}
             {supplier.contact_person && (

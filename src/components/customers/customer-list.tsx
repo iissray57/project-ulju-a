@@ -16,6 +16,7 @@ import {
 import { ExportButton } from '@/components/ui/export-button';
 import type { ExportColumn } from '@/lib/utils/export';
 import type { Database } from '@/lib/database.types';
+import { formatPhone } from '@/lib/utils';
 
 type Customer = Database['public']['Tables']['customers']['Row'];
 
@@ -26,7 +27,7 @@ interface CustomerListProps {
 
 const CUSTOMER_EXPORT_COLUMNS: ExportColumn<Customer>[] = [
   { header: '고객명', accessor: (r) => r.name },
-  { header: '연락처', accessor: (r) => r.phone },
+  { header: '연락처', accessor: (r) => formatPhone(r.phone) },
   { header: '주소', accessor: (r) => r.address },
   { header: '상세주소', accessor: (r) => r.address_detail },
   { header: '메모', accessor: (r) => r.memo },
@@ -94,7 +95,7 @@ export function CustomerList({ customers, total }: CustomerListProps) {
             >
               <CardContent className="space-y-2">
                 <div className="font-semibold text-lg">{customer.name}</div>
-                <div className="text-sm text-muted-foreground">{customer.phone}</div>
+                <div className="text-sm text-muted-foreground">{formatPhone(customer.phone)}</div>
                 {customer.address && (
                   <div className="text-sm text-muted-foreground">
                     {customer.address}
@@ -134,7 +135,7 @@ export function CustomerList({ customers, total }: CustomerListProps) {
                   onClick={() => router.push(`/customers/${customer.id}`)}
                 >
                   <TableCell className="font-medium">{customer.name}</TableCell>
-                  <TableCell>{customer.phone}</TableCell>
+                  <TableCell>{formatPhone(customer.phone)}</TableCell>
                   <TableCell>
                     {customer.address}
                     {customer.address_detail && ` ${customer.address_detail}`}

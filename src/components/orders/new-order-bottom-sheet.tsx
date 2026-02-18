@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { createOrder } from '@/app/(dashboard)/orders/actions';
 import { getCustomers } from '@/app/(dashboard)/customers/actions';
 import type { Database } from '@/lib/database.types';
+import { formatPhone } from '@/lib/utils';
 
 type Customer = Database['public']['Tables']['customers']['Row'];
 
@@ -146,7 +147,7 @@ export function NewOrderBottomSheet() {
                       onClick={() => selectCustomer(c)}
                     >
                       <div className="font-medium">{c.name}</div>
-                      <div className="text-xs text-muted-foreground">{c.phone}</div>
+                      <div className="text-xs text-muted-foreground">{formatPhone(c.phone)}</div>
                     </button>
                   ))}
                 </div>
@@ -154,7 +155,7 @@ export function NewOrderBottomSheet() {
             </div>
             {selectedCustomer && (
               <p className="text-xs text-muted-foreground">
-                선택: {selectedCustomer.name} ({selectedCustomer.phone})
+                선택: {selectedCustomer.name} ({formatPhone(selectedCustomer.phone)})
               </p>
             )}
           </div>

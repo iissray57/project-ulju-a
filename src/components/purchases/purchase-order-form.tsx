@@ -21,6 +21,7 @@ import {
 import { Search, Building2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { formatPhone } from '@/lib/utils';
 
 interface Supplier {
   id: string;
@@ -120,14 +121,6 @@ export function PurchaseOrderForm({ poId, defaultValues }: PurchaseOrderFormProp
     [setValue]
   );
 
-  // 전화번호 포맷
-  const formatPhone = (value: string) => {
-    const num = value.replace(/[^\d]/g, '');
-    if (num.length <= 3) return num;
-    if (num.length <= 7) return `${num.slice(0, 3)}-${num.slice(3)}`;
-    return `${num.slice(0, 3)}-${num.slice(3, 7)}-${num.slice(7, 11)}`;
-  };
-
   const onSubmit = async (data: PurchaseOrderFormData) => {
     setIsSubmitting(true);
 
@@ -219,7 +212,7 @@ export function PurchaseOrderForm({ poId, defaultValues }: PurchaseOrderFormProp
                               <div className="min-w-0 flex-1">
                                 <div className="font-medium">{supplier.name}</div>
                                 {supplier.phone && (
-                                  <div className="text-sm text-muted-foreground">{supplier.phone}</div>
+                                  <div className="text-sm text-muted-foreground">{formatPhone(supplier.phone)}</div>
                                 )}
                               </div>
                             </div>

@@ -5,6 +5,7 @@ import type { Database } from '@/lib/database.types';
 import { QuoteRequestDetailDialog } from './quote-request-detail-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { formatPhone } from '@/lib/utils';
 
 type QuoteRequestRow = Database['public']['Tables']['quote_requests']['Row'];
 
@@ -86,7 +87,7 @@ export function QuoteRequestsList({ initialData, total }: QuoteRequestsListProps
                 onClick={() => handleRowClick(item)}
               >
                 <td className="px-4 py-3 font-medium">{item.customer_name}</td>
-                <td className="px-4 py-3 text-muted-foreground">{item.customer_phone}</td>
+                <td className="px-4 py-3 text-muted-foreground">{formatPhone(item.customer_phone)}</td>
                 <td className="px-4 py-3 hidden sm:table-cell">
                   <Badge variant="outline" className="text-xs">
                     {CATEGORY_LABELS[item.category] || item.category}

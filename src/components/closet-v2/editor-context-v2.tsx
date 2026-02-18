@@ -467,6 +467,7 @@ export function EditorProviderV2({ children }: { children: ReactNode }) {
       const furnitureColors: Record<DressingFurnitureType, { bg: string; border: string }> = {
         closet_unit: { bg: '#DBEAFE', border: '#3B82F6' },
         drawer_unit: { bg: '#FEE2E2', border: '#EF4444' },
+        bedding_unit: { bg: '#FDF2F8', border: '#D946EF' },
         shoe_rack: { bg: '#D1FAE5', border: '#10B981' },
         island: { bg: '#FEF3C7', border: '#F59E0B' },
         mirror: { bg: '#E0E7FF', border: '#6366F1' },

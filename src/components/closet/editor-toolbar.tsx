@@ -2,20 +2,16 @@
 
 import {
   Box,
-  Circle,
   Eye,
   EyeOff,
   Grid3X3,
   Layers,
   Magnet,
   Menu,
-  RectangleHorizontal,
   Redo2,
   RotateCcw,
-  Square,
   SquareStack,
   Trash2,
-  Type,
   Undo2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,11 +19,11 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useEditorState, useEditorDispatch, useEditorHistory } from './editor-context';
 import { ExportImageButton } from './export-image-button';
-import type { ClosetComponent, ShapeType, ViewMode } from '@/lib/types/closet-editor';
+import type { ViewMode } from '@/lib/types/closet-editor';
 
 const VIEW_MODES: { mode: ViewMode; icon: typeof Layers; label: string }[] = [
   { mode: 'plan', icon: Layers, label: '평면도' },
-  { mode: 'elevation', icon: SquareStack, label: '입면도' },
+  { mode: 'elevation', icon: SquareStack, label: '정면도' },
   { mode: '3d', icon: Box, label: '3D' },
 ];
 
@@ -35,51 +31,6 @@ const GRID_SIZES = [
   { value: 25, label: '25mm' },
   { value: 50, label: '50mm' },
   { value: 100, label: '100mm' },
-];
-
-const SHAPE_TOOLS: { type: ShapeType; icon: typeof Square; label: string; defaults: Partial<ClosetComponent> }[] = [
-  {
-    type: 'rect',
-    icon: Square,
-    label: '사각형',
-    defaults: {
-      dimensions: { width: 600, height: 100, depth: 400 },
-      color: '#e2e8f0',
-      borderColor: '#94a3b8',
-    },
-  },
-  {
-    type: 'rounded-rect',
-    icon: RectangleHorizontal,
-    label: '둥근 사각형',
-    defaults: {
-      dimensions: { width: 600, height: 100, depth: 400 },
-      color: '#dbeafe',
-      borderColor: '#60a5fa',
-      borderRadius: 30,
-    },
-  },
-  {
-    type: 'circle',
-    icon: Circle,
-    label: '원형',
-    defaults: {
-      dimensions: { width: 400, height: 100, depth: 400 },
-      color: '#fce7f3',
-      borderColor: '#f472b6',
-    },
-  },
-  {
-    type: 'text',
-    icon: Type,
-    label: '텍스트',
-    defaults: {
-      dimensions: { width: 400, height: 50, depth: 200 },
-      color: '#fef3c7',
-      borderColor: '#f59e0b',
-      label: '텍스트',
-    },
-  },
 ];
 
 interface EditorToolbarProps {
@@ -102,24 +53,6 @@ export function EditorToolbar({ onOpenMobilePalette }: EditorToolbarProps) {
   const handleUndo = () => dispatch({ type: 'UNDO' });
   const handleRedo = () => dispatch({ type: 'REDO' });
 
-  const handleAddShape = (tool: (typeof SHAPE_TOOLS)[number]) => {
-    const component: ClosetComponent = {
-      id: crypto.randomUUID(),
-      name: tool.label,
-      shapeType: tool.type,
-      position: [0, 0, 0],
-      rotation: [0, 0, 0],
-      scale: [1, 1, 1],
-      dimensions: tool.defaults.dimensions!,
-      color: tool.defaults.color!,
-      borderColor: tool.defaults.borderColor,
-      borderRadius: tool.defaults.borderRadius,
-      label: tool.defaults.label,
-      locked: false,
-    };
-    dispatch({ type: 'ADD_COMPONENT', payload: component });
-  };
-
   return (
     <div className="flex flex-wrap items-center gap-1 border-b border-border bg-background px-3 py-2">
       {/* Mobile: palette toggle */}
@@ -128,7 +61,7 @@ export function EditorToolbar({ onOpenMobilePalette }: EditorToolbarProps) {
         size="sm"
         onClick={onOpenMobilePalette}
         className="lg:hidden h-8"
-        title="부품 팔레트 열기"
+        title="가구 팔레트 열기"
       >
         <Menu className="size-4" />
       </Button>
@@ -156,57 +89,18 @@ export function EditorToolbar({ onOpenMobilePalette }: EditorToolbarProps) {
 
       {/* Undo/Redo */}
       <div className="flex items-center gap-0.5">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleUndo}
-          disabled={!canUndo}
-          title="실행 취소 (Undo)"
-          className="h-8"
-        >
+        <Button variant="ghost" size="sm" onClick={handleUndo} disabled={!canUndo} title="실행 취소" className="h-8">
           <Undo2 className="size-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleRedo}
-          disabled={!canRedo}
-          title="다시 실행 (Redo)"
-          className="h-8"
-        >
+        <Button variant="ghost" size="sm" onClick={handleRedo} disabled={!canRedo} title="다시 실행" className="h-8">
           <Redo2 className="size-4" />
         </Button>
       </div>
 
       <Separator orientation="vertical" className="mx-1 h-8" />
 
-      {/* Shape tools */}
-      <div className="flex items-center gap-1">
-        {SHAPE_TOOLS.map((tool) => (
-          <Button
-            key={tool.type}
-            variant="ghost"
-            size="sm"
-            onClick={() => handleAddShape(tool)}
-            title={`${tool.label} 추가`}
-            className="h-8"
-          >
-            <tool.icon className="size-4" />
-            <span className="hidden sm:inline text-xs">{tool.label}</span>
-          </Button>
-        ))}
-      </div>
-
-      <Separator orientation="vertical" className="mx-1 h-8" />
-
       {/* Camera reset */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => dispatch({ type: 'RESET_CAMERA' })}
-        title="뷰 리셋"
-        className="h-8"
-      >
+      <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'RESET_CAMERA' })} title="뷰 리셋" className="h-8">
         <RotateCcw className="size-4" />
       </Button>
 

@@ -14,14 +14,48 @@ export type DoorType = 'none' | 'panel' | 'sliding' | 'glass';
 // ── 내부 부품 타입 (입면도용) ──────────────────────────────────
 export type PartType = 'shelf' | 'rod' | 'drawer' | 'shoe-shelf' | 'pants-hanger' | 'divider';
 
+// ── 가구 카테고리 (4종) ──────────────────────────────────────
+export type FurnitureCategory = 'wardrobe' | 'drawer_cabinet' | 'bedding_cabinet' | 'mirror_cabinet';
+
+// ── 프레임 색상 ──────────────────────────────────────────────
+export type FrameColorKey = 'silver' | 'black' | 'white' | 'champagne_gold';
+
+export const FRAME_COLOR_OPTIONS: Record<FrameColorKey, { label: string; hex: string }> = {
+  silver: { label: '실버', hex: '#C0C0C0' },
+  black: { label: '블랙', hex: '#2C2C2C' },
+  white: { label: '화이트', hex: '#F5F5F5' },
+  champagne_gold: { label: '샴페인골드', hex: '#D4AF37' },
+};
+
+// ── 선반 색상 (옷장 전용) ──────────────────────────────────────
+export type ShelfColorKey =
+  | 'white'
+  | 'white_oak'
+  | 'maple'
+  | 'walnut'
+  | 'gray'
+  | 'stone_white'
+  | 'stone_gray';
+
+export const SHELF_COLOR_OPTIONS: Record<ShelfColorKey, { label: string; hex: string }> = {
+  white: { label: '화이트', hex: '#F5F5F5' },
+  white_oak: { label: '화이트오크', hex: '#E8DCC4' },
+  maple: { label: '메이플', hex: '#F2D8A0' },
+  walnut: { label: '월넛', hex: '#6B4226' },
+  gray: { label: '그레이', hex: '#9CA3AF' },
+  stone_white: { label: '스톤화이트', hex: '#E8E4DF' },
+  stone_gray: { label: '스톤그레이', hex: '#B0ADA8' },
+};
+
 // ── 드레스룸 가구 카테고리 ──────────────────────────────────────
 export type DressingFurnitureType =
   | 'closet_unit'    // 옷장 유닛 (A~F 타입)
   | 'drawer_unit'    // 서랍장
-  | 'shoe_rack'      // 신발장
-  | 'island'         // 아일랜드 (중앙 독립가구)
-  | 'mirror'         // 전신거울
-  | 'accessory_box'; // 악세서리함
+  | 'bedding_unit'   // 이불장
+  | 'mirror'         // 거울장
+  | 'shoe_rack'      // 신발장 (레거시)
+  | 'island'         // 아일랜드 (레거시)
+  | 'accessory_box'; // 악세서리함 (레거시)
 
 export interface UnitPart {
   id: string;
@@ -34,30 +68,33 @@ export interface UnitPart {
 export type ClosetPresetType = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
 
 // ── 코너 타입 (ㄱ자/ㄴ자) ─────────────────────────────────────────
-export type CornerType = 'L' | 'R';  // L: ㄱ자 (왼쪽 위로), R: ㄴ자 (오른쪽 위로)
+export type CornerType = 'L' | 'R';
 
 export interface ClosetComponent {
   id: string;
   presetId?: string;
-  presetType?: ClosetPresetType;  // A~F 타입
-  furnitureType?: DressingFurnitureType; // 드레스룸 가구 카테고리
-  cornerType?: CornerType;        // 코너 타입 (ㄱ자/ㄴ자)
+  presetType?: ClosetPresetType;
+  furnitureType?: DressingFurnitureType;
+  furnitureCategory?: FurnitureCategory;
+  cornerType?: CornerType;
   name: string;
   shapeType: ShapeType;
-  position: [number, number, number]; // [x, 0, z] (y는 항상 0)
-  rotation: [number, number, number]; // [0, ry, 0] (y축 회전만 사용)
+  position: [number, number, number];
+  rotation: [number, number, number];
   scale: [number, number, number];
   dimensions: { width: number; height: number; depth: number };
   color: string;
-  material?: MaterialType; // 재질 타입
+  frameColor?: FrameColorKey;
+  shelfColor?: ShelfColorKey;
+  material?: MaterialType;
   borderColor?: string;
-  borderRadius?: number; // rounded-rect용 (mm)
+  borderRadius?: number;
   opacity?: number;
-  label?: string; // 텍스트 레이블
+  label?: string;
   locked: boolean;
-  mirrored?: boolean;  // 좌우 반전 (평면도 전용)
-  parts?: UnitPart[];  // 내부 부품 (선반, 봉 등) - 입면도용
-  doorType?: DoorType; // 도어 타입 (없음/패널/슬라이딩/유리)
+  mirrored?: boolean;
+  parts?: UnitPart[];
+  doorType?: DoorType;
 }
 
 export interface EditorState {
@@ -92,11 +129,48 @@ export const DEFAULT_EDITOR_STATE: EditorState = {
   viewMode: 'plan',
   components: [],
   selectedId: null,
-  gridSize: 50, // mm
+  gridSize: 50,
   snapEnabled: true,
   showDimensions: true,
   showGrid: true,
   cameraResetCounter: 0,
   isDragging: false,
   zoom: 80,
+};
+
+// ── 가구 카테고리 메타 ──────────────────────────────────────────
+export const FURNITURE_CATEGORY_META: Record<FurnitureCategory, {
+  label: string;
+  dressingType: DressingFurnitureType;
+  hasTypes: boolean;
+  hasShelfColor: boolean;
+  fixedWidth?: number;
+  fixedDepth?: number;
+}> = {
+  wardrobe: {
+    label: '옷장',
+    dressingType: 'closet_unit',
+    hasTypes: true,
+    hasShelfColor: true,
+  },
+  drawer_cabinet: {
+    label: '서랍장',
+    dressingType: 'drawer_unit',
+    hasTypes: true,
+    hasShelfColor: false,
+  },
+  bedding_cabinet: {
+    label: '이불장',
+    dressingType: 'bedding_unit',
+    hasTypes: true,
+    hasShelfColor: false,
+  },
+  mirror_cabinet: {
+    label: '거울장',
+    dressingType: 'mirror',
+    hasTypes: false,
+    hasShelfColor: false,
+    fixedWidth: 400,
+    fixedDepth: 400,
+  },
 };

@@ -15,9 +15,11 @@ import {
   ChevronRight,
   Box,
   PencilRuler,
+  LayoutGrid,
   Users,
   Boxes,
   Building2,
+  MessageSquareText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -27,6 +29,7 @@ const navItems = [
   { href: '/', label: '대시보드', icon: Home },
   { href: '/customers', label: '고객관리', icon: Users },
   { href: '/orders', label: '주문관리', icon: ClipboardList },
+  { href: '/quote-requests', label: '견적요청', icon: MessageSquareText },
   { href: '/schedule', label: '스케줄', icon: Calendar },
   { href: '/products', label: '품목관리', icon: Boxes },
   { href: '/inventory', label: '재고관리', icon: Package },
@@ -39,6 +42,7 @@ const navItems = [
 const modelingItems = [
   { href: '/closet/presets', label: '프리셋 관리', icon: Box },
   { href: '/closet/editor', label: '2D 에디터', icon: PencilRuler },
+  { href: '/closet/model/new-v2', label: '2D 에디터 V2', icon: LayoutGrid },
 ];
 
 const bottomNavItems = [
@@ -60,14 +64,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         collapsed ? 'w-16' : 'w-60'
       )}
     >
-      {/* Logo */}
-      <div className="flex h-14 items-center px-4">
-        {!collapsed && (
+      {/* Logo + Toggle */}
+      <div className="flex h-14 items-center justify-between px-4">
+        {!collapsed ? (
           <span className="text-lg font-bold tracking-tight">울주앵글</span>
-        )}
-        {collapsed && (
+        ) : (
           <span className="text-lg font-bold">UA</span>
         )}
+        <Button variant="ghost" size="icon" onClick={onToggle} className="h-7 w-7 shrink-0">
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </Button>
       </div>
 
       <Separator />
@@ -152,25 +158,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           );
         })}
 
-        {/* Collapse toggle */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggle}
-          className={cn(
-            'w-full',
-            collapsed ? 'justify-center px-2' : 'justify-start px-3'
-          )}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-5 w-5" />
-          ) : (
-            <>
-              <ChevronLeft className="h-5 w-5" />
-              <span className="ml-3">접기</span>
-            </>
-          )}
-        </Button>
+
       </div>
     </aside>
   );

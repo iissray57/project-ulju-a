@@ -9,6 +9,8 @@ import { OrderDetailSections } from '@/components/orders/order-detail-sections';
 import { OrderMaterialsEditor } from '@/components/orders/order-materials-editor';
 import { OrderChecklist } from '@/components/orders/order-checklist';
 import { OrderModels } from '@/components/orders/order-models';
+import { OutsourceOrdersSection } from '@/components/orders/outsource-orders-section';
+import { OrderCostSummaryCard } from '@/components/orders/order-cost-summary';
 import { getOrderChecklist } from '../checklist-actions';
 import { QuotationDownloadButton } from '@/components/orders/quotation-download-button';
 import { SitePhotoUpload } from '@/components/orders/site-photo-upload';
@@ -81,6 +83,9 @@ export default async function OrderDetailPage({ params }: PageProps) {
       {/* 모델링 */}
       <OrderModels orderId={id} />
 
+      {/* 외주 발주 */}
+      <OutsourceOrdersSection orderId={id} />
+
       <Separator />
 
       {/* 현장 사진 */}
@@ -96,6 +101,9 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
       {/* 자재 현황 */}
       <OrderMaterialsEditor orderId={id} />
+
+      {/* 원가 / 마진 */}
+      <OrderCostSummaryCard orderId={id} />
 
       {/* 관련 일정 - TODO: 추후 활성화 */}
       {/* <OrderSchedules orderId={id} /> */}

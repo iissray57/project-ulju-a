@@ -24,7 +24,7 @@ import {
   ORDER_STATUS_LABELS,
   type OrderStatus,
 } from '@/lib/schemas/order-status';
-import { transitionOrderStatus, updateOrder, getOrderReadiness } from '@/app/(dashboard)/orders/actions';
+import { transitionOrderStatus, updateOrder, getOrderReadiness, getOutsourceOrderSummary } from '@/app/(dashboard)/orders/actions';
 import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -93,8 +93,15 @@ export function StatusTransitionFormDialog({
     materialCount: number;
   } | null>(null);
   const [readinessLoaded, setReadinessLoaded] = useState(false);
+  const [outsourceSummary, setOutsourceSummary] = useState<{
+    total: number;
+    completed: number;
+    incomplete: number;
+  } | null>(null);
+  const [outsourceSummaryLoaded, setOutsourceSummaryLoaded] = useState(false);
 
   const isQuotationTransition = fromStatus === 'inquiry' && toStatus === 'quotation';
+  const isSettlementWaitTransition = fromStatus === 'work' && toStatus === 'settlement_wait';
 
   // inquiry→quotation 전이 시 모델/자재 등록 여부 사전 조회
   useEffect(() => {
@@ -106,6 +113,17 @@ export function StatusTransitionFormDialog({
       });
     }
   }, [open, isQuotationTransition, order.id]);
+
+  // work→settlement_wait 전이 시 외주 완료 현황 사전 조회
+  useEffect(() => {
+    if (open && isSettlementWaitTransition) {
+      setOutsourceSummaryLoaded(false);
+      getOutsourceOrderSummary(order.id).then((result) => {
+        setOutsourceSummary(result);
+        setOutsourceSummaryLoaded(true);
+      });
+    }
+  }, [open, isSettlementWaitTransition, order.id]);
 
   const transitionKey = `${fromStatus}→${toStatus}`;
   const transitionFields = TRANSITION_FIELDS[transitionKey] || [];
@@ -199,6 +217,30 @@ export function StatusTransitionFormDialog({
             <span className="font-medium">{ORDER_STATUS_LABELS[toStatus]}</span>
           </DialogDescription>
         </DialogHeader>
+
+        {/* work→settlement_wait: 외주 발주 완료 현황 */}
+        {isSettlementWaitTransition && (
+          <div className="space-y-2 py-2">
+            <p className="text-sm font-medium">외주 발주 현황</p>
+            {!outsourceSummaryLoaded ? (
+              <p className="text-sm text-muted-foreground">확인 중...</p>
+            ) : outsourceSummary ? (
+              outsourceSummary.total === 0 ? (
+                <p className="text-sm text-muted-foreground">외주 발주 없음 (앵글 전용 주문)</p>
+              ) : (
+                <div className="space-y-1 text-sm">
+                  <div className={`flex items-center gap-2 ${outsourceSummary.incomplete === 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                    <span>{outsourceSummary.incomplete === 0 ? '✓' : '✗'}</span>
+                    <span>
+                      외주 {outsourceSummary.total}건 중 {outsourceSummary.completed}건 완료
+                      {outsourceSummary.incomplete > 0 && ` (${outsourceSummary.incomplete}건 미완료)`}
+                    </span>
+                  </div>
+                </div>
+              )
+            ) : null}
+          </div>
+        )}
 
         {/* inquiry→quotation: 모델/자재 등록 현황 */}
         {isQuotationTransition && (

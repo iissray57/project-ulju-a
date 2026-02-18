@@ -412,6 +412,33 @@ export async function transitionOrderStatus(
       };
     }
 
+    // work → settlement_wait: 외주 발주 완료 여부 검증
+    if (currentStatus === 'work' && newStatus === 'settlement_wait') {
+      const { count: totalCount } = await supabase
+        .from('outsource_orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('order_id', orderId);
+
+      const total = totalCount ?? 0;
+
+      if (total > 0) {
+        const { count: incompleteCount } = await supabase
+          .from('outsource_orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('order_id', orderId)
+          .not('status', 'in', '("completed","cancelled")');
+
+        const incomplete = incompleteCount ?? 0;
+
+        if (incomplete > 0) {
+          const completed = total - incomplete;
+          return {
+            error: `미완료된 외주 발주가 있습니다. (${total}건 중 ${completed}건 완료)`,
+          };
+        }
+      }
+    }
+
     // 취소 처리
     if (newStatus === 'cancelled') {
       // 작업 완료 이후는 취소 불가
@@ -477,6 +504,35 @@ export async function transitionOrderStatus(
 }
 
 /**
+ * 주문의 외주 발주 완료 현황 조회 (작업→정산대기 전환 검증용)
+ */
+export async function getOutsourceOrderSummary(orderId: string): Promise<{
+  total: number;
+  completed: number;
+  incomplete: number;
+}> {
+  const supabase = await createClient();
+
+  const [totalResult, incompleteResult] = await Promise.all([
+    supabase
+      .from('outsource_orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('order_id', orderId),
+    supabase
+      .from('outsource_orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('order_id', orderId)
+      .not('status', 'in', '("completed","cancelled")'),
+  ]);
+
+  const total = totalResult.count ?? 0;
+  const incomplete = incompleteResult.count ?? 0;
+  const completed = total - incomplete;
+
+  return { total, completed, incomplete };
+}
+
+/**
  * 주문의 모델/자재 등록 여부 조회 (견적 전환 검증용)
  */
 export async function getOrderReadiness(orderId: string): Promise<{
@@ -507,4 +563,100 @@ export async function getOrderReadiness(orderId: string): Promise<{
     modelCount,
     materialCount,
   };
+}
+
+export interface OrderCostSummary {
+  materialCost: number;
+  outsourceCost: number;
+  totalCost: number;
+  revenue: number;
+  margin: number;
+  marginRate: number;
+}
+
+/**
+ * 주문 원가/마진 요약 조회
+ */
+export async function getOrderCostSummary(
+  orderId: string
+): Promise<ActionResult<OrderCostSummary>> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: '인증이 필요합니다.' };
+    }
+
+    // 1. 주문 매출액 조회
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('confirmed_amount, quotation_amount')
+      .eq('id', orderId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (orderError || !order) {
+      return { error: orderError?.message ?? '주문을 찾을 수 없습니다.' };
+    }
+
+    const revenue =
+      (order as { confirmed_amount: number | null; quotation_amount: number | null })
+        .confirmed_amount ??
+      (order as { confirmed_amount: number | null; quotation_amount: number | null })
+        .quotation_amount ??
+      0;
+
+    // 2. 자재 원가: order_materials × product.unit_price
+    const { data: materials, error: materialsError } = await supabase
+      .from('order_materials')
+      .select('planned_quantity, product:products(unit_price)')
+      .eq('order_id', orderId);
+
+    if (materialsError) {
+      return { error: materialsError.message };
+    }
+
+    const materialCost = (materials ?? []).reduce((sum, m) => {
+      const unitPrice =
+        (m.product as unknown as { unit_price: number | null } | null)?.unit_price ?? 0;
+      return sum + m.planned_quantity * unitPrice;
+    }, 0);
+
+    // 3. 외주 원가: outsource_orders.amount 합계 (cancelled 제외)
+    const { data: outsourceOrders, error: outsourceError } = await supabase
+      .from('outsource_orders')
+      .select('amount')
+      .eq('order_id', orderId)
+      .neq('status', 'cancelled');
+
+    if (outsourceError) {
+      return { error: outsourceError.message };
+    }
+
+    const outsourceCost = (outsourceOrders ?? []).reduce(
+      (sum, o) => sum + (o.amount ?? 0),
+      0
+    );
+
+    const totalCost = materialCost + outsourceCost;
+    const margin = revenue - totalCost;
+    const marginRate = revenue > 0 ? (margin / revenue) * 100 : 0;
+
+    return {
+      data: {
+        materialCost,
+        outsourceCost,
+        totalCost,
+        revenue,
+        margin,
+        marginRate,
+      },
+    };
+  } catch (err) {
+    console.error('[getOrderCostSummary]', err);
+    return { error: '원가 계산 중 오류가 발생했습니다.' };
+  }
 }

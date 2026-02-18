@@ -47,7 +47,7 @@ export function OrderModels({ orderId }: OrderModelsProps) {
           모델링 ({models.length})
         </h2>
         <Button size="sm" variant="outline" asChild>
-          <Link href={`/closet/editor?orderId=${orderId}`}>
+          <Link href={`/closet/model/new-v2?orderId=${orderId}`}>
             <Plus className="size-4 mr-1" />새 모델
           </Link>
         </Button>
@@ -63,7 +63,7 @@ export function OrderModels({ orderId }: OrderModelsProps) {
             아직 모델이 없습니다. 2D 디자이너에서 배치도를 만들어보세요.
           </p>
           <Button size="sm" variant="outline" asChild>
-            <Link href={`/closet/editor?orderId=${orderId}`}>
+            <Link href={`/closet/model/new-v2?orderId=${orderId}`}>
               <PencilRuler className="size-4 mr-1" />디자이너 열기
             </Link>
           </Button>
@@ -73,7 +73,7 @@ export function OrderModels({ orderId }: OrderModelsProps) {
           {models.map((m) => (
             <div key={m.id} className="rounded-lg border bg-card overflow-hidden group">
               {/* 썸네일 */}
-              <Link href={`/closet/editor?orderId=${orderId}&modelId=${m.id}`}>
+              <Link href={`/closet/model/new-v2?orderId=${orderId}&modelId=${m.id}`}>
                 {m.thumbnail_url ? (
                   <img
                     src={m.thumbnail_url}
@@ -96,7 +96,7 @@ export function OrderModels({ orderId }: OrderModelsProps) {
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <Button size="xs" variant="ghost" asChild>
-                    <Link href={`/closet/editor?orderId=${orderId}&modelId=${m.id}`}>
+                    <Link href={`/closet/model/new-v2?orderId=${orderId}&modelId=${m.id}`}>
                       편집
                     </Link>
                   </Button>

@@ -10,6 +10,7 @@ import {
   generateQuotationDocument,
   type QuotationData,
 } from '@/lib/pdf/quotation-document';
+import { extractComponentSummary } from '@/lib/utils/component-summary';
 import { createChecklistDocument } from '@/lib/pdf/checklist-document';
 import {
   DEFAULT_PREPARATION_CHECKLIST,
@@ -184,16 +185,33 @@ async function generateQuotationPDF(
     // 모델 이미지 조회
     const { data: modelData } = await supabase
       .from('closet_models')
-      .select('name, thumbnail_url')
+      .select('name, thumbnail_url, elevation_image_url, three_d_image_url, model_data')
       .eq('order_id', orderId)
       .order('created_at', { ascending: true });
 
-    const modelImages = (modelData ?? [])
-      .filter((m: { thumbnail_url: string | null }) => m.thumbnail_url)
-      .map((m: { name: string; thumbnail_url: string | null }) => ({
-        name: m.name,
-        thumbnail_url: m.thumbnail_url!,
-      }));
+    const modelImages = (modelData ?? []).map((m: any) => ({
+      name: m.name,
+      thumbnail_url: m.thumbnail_url,
+      elevation_image_url: m.elevation_image_url,
+      three_d_image_url: m.three_d_image_url,
+    }));
+
+    // 가구 구성 요약 추출
+    let componentSummary: QuotationData['componentSummary'] = undefined;
+    if (modelData && modelData.length > 0) {
+      const allSummaries = modelData
+        .filter((m: any) => m.model_data && typeof m.model_data === 'object')
+        .flatMap((m: any) => {
+          try {
+            return extractComponentSummary(m.model_data);
+          } catch {
+            return [];
+          }
+        });
+      if (allSummaries.length > 0) {
+        componentSummary = allSummaries;
+      }
+    }
 
     // QuotationData 구성
     const quotationData: QuotationData = {
@@ -213,6 +231,7 @@ async function generateQuotationPDF(
       },
       materials,
       modelImages,
+      componentSummary,
     };
 
     // PDF 문서 생성

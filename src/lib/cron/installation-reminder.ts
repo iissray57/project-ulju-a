@@ -8,17 +8,20 @@ import webpush from 'web-push';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY!;
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// VAPID 설정
-webpush.setVapidDetails(
-  'mailto:admin@closetbiz.com',
-  vapidPublicKey,
-  vapidPrivateKey
-);
+// VAPID 설정 (환경변수가 있을 때만 초기화)
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+
+if (vapidPublicKey && vapidPrivateKey) {
+  webpush.setVapidDetails(
+    'mailto:admin@closetbiz.com',
+    vapidPublicKey,
+    vapidPrivateKey
+  );
+}
 
 interface TomorrowInstallation {
   orderId: string;

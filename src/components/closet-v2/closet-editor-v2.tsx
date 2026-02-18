@@ -1,6 +1,7 @@
 'use client';
 
-import { useRef, useCallback, lazy, Suspense } from 'react';
+import { useRef, useCallback, lazy, Suspense, useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { EditorProviderV2, useEditorV2 } from './editor-context-v2';
 import { KonvaCanvas } from './canvas/konva-canvas';
 import { EditorToolbarV2 } from './toolbar/editor-toolbar-v2';
@@ -8,6 +9,12 @@ import { PresetPalette } from './palette/preset-palette';
 import { PropertyPanel } from './palette/property-panel';
 import { useHistory } from './hooks/use-history';
 import type { ClosetPresetType, CornerType } from '@/lib/types/closet-editor';
+import {
+  syncModelCaptures,
+  createClosetModel,
+  updateClosetModel,
+  type ModelData,
+} from '@/app/(dashboard)/closet/model-actions';
 
 // Lazy load Three.js view to reduce initial bundle
 const ThreeView = lazy(() =>
@@ -15,11 +22,25 @@ const ThreeView = lazy(() =>
 );
 
 function EditorContent() {
-  const { addComponentFromPreset, addFurnitureFromPreset, state } = useEditorV2();
+  const { addComponentFromPreset, addFurnitureFromPreset, state, dispatch } = useEditorV2();
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [syncing, setSyncing] = useState(false);
 
   // Enable keyboard shortcuts for undo/redo/delete
   useHistory();
+
+  // Load existing model on mount if modelId is provided
+  useEffect(() => {
+    if (!state.modelId) return;
+    const modelId = state.modelId;
+    (async () => {
+      const { getClosetModel } = await import('@/app/(dashboard)/closet/model-actions');
+      const result = await getClosetModel(modelId);
+      if (result.success && result.data) {
+        dispatch({ type: 'LOAD_STATE', payload: result.data.model_data.components });
+      }
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDrop = useCallback(
     (presetType: string, width: number, x: number, z: number, cornerType?: string) => {
@@ -43,7 +64,6 @@ function EditorContent() {
 
   const handleExport = useCallback(async () => {
     if (state.viewMode === '3d') {
-      // Three.js canvas export
       const canvas = document.querySelector('canvas') as HTMLCanvasElement;
       if (!canvas) return;
       const dataUrl = canvas.toDataURL('image/png');
@@ -52,7 +72,6 @@ function EditorContent() {
       link.href = dataUrl;
       link.click();
     } else {
-      // Konva stage export
       const stage = document.querySelector('.konvajs-content canvas') as HTMLCanvasElement;
       if (!stage) return;
       const dataUrl = stage.toDataURL();
@@ -63,13 +82,87 @@ function EditorContent() {
     }
   }, [state.viewMode]);
 
+  const handleSync = useCallback(async () => {
+    if (!state.orderId) {
+      toast.error('주문 정보가 없습니다. 주문 상세에서 에디터를 열어주세요.');
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      const originalViewMode = state.viewMode;
+
+      const captureCanvas = (): string => {
+        const canvas = document.querySelector('.konvajs-content canvas') as HTMLCanvasElement;
+        if (!canvas) throw new Error('캔버스를 찾을 수 없습니다.');
+        return canvas.toDataURL('image/png');
+      };
+
+      dispatch({ type: 'SET_VIEW_MODE', payload: 'plan' });
+      await new Promise(r => setTimeout(r, 300));
+      const planImage = captureCanvas();
+
+      dispatch({ type: 'SET_VIEW_MODE', payload: 'elevation' });
+      await new Promise(r => setTimeout(r, 300));
+      const elevationImage = captureCanvas();
+
+      dispatch({ type: 'SET_VIEW_MODE', payload: originalViewMode });
+
+      const modelData: ModelData = {
+        components: state.components,
+        gridSize: state.gridSize,
+        version: 1,
+      };
+
+      let modelId = state.modelId;
+      if (!modelId) {
+        const createResult = await createClosetModel({
+          orderId: state.orderId,
+          name: `모델 ${new Date().toLocaleDateString('ko-KR')}`,
+          modelData,
+        });
+        if (!createResult.success || !createResult.data) {
+          throw new Error(createResult.error || '모델 생성 실패');
+        }
+        modelId = createResult.data.id;
+        dispatch({ type: 'SET_MODEL_ID', payload: modelId });
+      } else {
+        await updateClosetModel({
+          id: modelId,
+          modelData,
+        });
+      }
+
+      const syncResult = await syncModelCaptures({
+        modelId,
+        planImage,
+        elevationImage,
+      });
+
+      if (!syncResult.success) {
+        throw new Error(syncResult.error || '이미지 동기화 실패');
+      }
+
+      toast.success('견적 동기화 완료');
+    } catch (err) {
+      console.error('Sync failed:', err);
+      toast.error(err instanceof Error ? err.message : '동기화 실패');
+    } finally {
+      setSyncing(false);
+    }
+  }, [state.orderId, state.modelId, state.viewMode, state.components, state.gridSize, dispatch]);
+
   const viewModeLabel =
     state.viewMode === 'plan' ? '평면도' : state.viewMode === 'elevation' ? '입면도' : '3D';
 
   return (
-    <div className="flex h-screen flex-col bg-slate-50">
+    <div className="-m-4 md:-m-6 -mb-20 lg:-mb-6 flex flex-col bg-slate-50" style={{ height: 'calc(100dvh - 3.5rem)' }}>
       {/* Toolbar */}
-      <EditorToolbarV2 onExport={handleExport} />
+      <EditorToolbarV2
+        onExport={handleExport}
+        onSync={state.orderId ? handleSync : undefined}
+        syncing={syncing}
+      />
 
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
@@ -118,9 +211,14 @@ function EditorContent() {
   );
 }
 
-export function ClosetEditorV2() {
+interface ClosetEditorV2Props {
+  orderId?: string | null;
+  modelId?: string | null;
+}
+
+export function ClosetEditorV2({ orderId, modelId }: ClosetEditorV2Props = {}) {
   return (
-    <EditorProviderV2>
+    <EditorProviderV2 orderId={orderId} modelId={modelId}>
       <EditorContent />
     </EditorProviderV2>
   );

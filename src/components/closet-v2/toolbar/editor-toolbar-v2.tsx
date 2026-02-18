@@ -13,6 +13,7 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
+  RefreshCw,
 } from 'lucide-react';
 import { useEditorV2 } from '../editor-context-v2';
 import type { ViewMode } from '@/lib/types/closet-editor';
@@ -47,9 +48,11 @@ function ToolbarButton({ icon, label, active, onClick, disabled }: ToolbarButton
 
 interface EditorToolbarV2Props {
   onExport: () => void;
+  onSync?: () => void;
+  syncing?: boolean;
 }
 
-export function EditorToolbarV2({ onExport }: EditorToolbarV2Props) {
+export function EditorToolbarV2({ onExport, onSync, syncing }: EditorToolbarV2Props) {
   const { state, dispatch } = useEditorV2();
   const { viewMode, showGrid, showDimensions, snapEnabled, zoom, historyIndex, history } = state;
 
@@ -179,6 +182,17 @@ export function EditorToolbarV2({ onExport }: EditorToolbarV2Props) {
           <Download size={14} />
           PNG
         </button>
+
+        {onSync && (
+          <button
+            onClick={onSync}
+            disabled={syncing}
+            className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
+            {syncing ? '동기화 중...' : '견적 동기화'}
+          </button>
+        )}
       </div>
     </div>
   );

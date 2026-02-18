@@ -2,16 +2,17 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import webpush from 'web-push';
 
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY!;
-
-webpush.setVapidDetails(
-  'mailto:admin@closetbiz.com',
-  vapidPublicKey,
-  vapidPrivateKey
-);
-
 export async function POST(request: Request) {
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY!;
+
+  if (vapidPublicKey && vapidPrivateKey) {
+    webpush.setVapidDetails(
+      'mailto:admin@closetbiz.com',
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+  }
   try {
     const supabase = await createClient();
     const {

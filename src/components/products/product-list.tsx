@@ -105,7 +105,7 @@ export function ProductList({ products, total }: ProductListProps) {
     }
 
     return filtered;
-  }, [products, selectedCategory, searchQuery]);
+  }, [products, selectedMain, selectedCategory, searchQuery]);
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);

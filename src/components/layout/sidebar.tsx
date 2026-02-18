@@ -13,9 +13,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Box,
   PencilRuler,
-  LayoutGrid,
+  Blinds,
   Users,
   Boxes,
   Building2,
@@ -40,9 +39,9 @@ const navItems = [
 ];
 
 const modelingItems = [
-  { href: '/closet/presets', label: '프리셋 관리', icon: Box },
-  { href: '/closet/editor', label: '2D 에디터', icon: PencilRuler },
-  { href: '/closet/model/new-v2', label: '2D 에디터 V2', icon: LayoutGrid },
+  { href: '/closet/model/new-v2', label: '2D 에디터', icon: PencilRuler },
+  { href: '/curtain-modeler', label: '커튼 모델러', icon: Blinds },
+  { href: '/angle-modeler', label: '앵글 모델러', icon: Boxes },
 ];
 
 const bottomNavItems = [

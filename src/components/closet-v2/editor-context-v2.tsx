@@ -7,6 +7,7 @@ import {
   type ReactNode,
   useCallback,
   useMemo,
+  useEffect,
 } from 'react';
 import type {
   ClosetComponent,
@@ -80,6 +81,8 @@ export interface EditorStateV2 {
   doorSelected: boolean; // 문 선택 상태
   history: ClosetComponent[][];
   historyIndex: number;
+  orderId: string | null;
+  modelId: string | null;
 }
 
 const DEFAULT_STATE: EditorStateV2 = {
@@ -105,6 +108,8 @@ const DEFAULT_STATE: EditorStateV2 = {
   doorSelected: false,
   history: [[]],
   historyIndex: 0,
+  orderId: null,
+  modelId: null,
 };
 
 // ── 액션 타입 ──────────────────────────────────────────────────────
@@ -129,7 +134,9 @@ type Action =
   | { type: 'SELECT_DOOR'; payload: boolean }
   | { type: 'UNDO' }
   | { type: 'REDO' }
-  | { type: 'LOAD_STATE'; payload: ClosetComponent[] };
+  | { type: 'LOAD_STATE'; payload: ClosetComponent[] }
+  | { type: 'SET_ORDER_CONTEXT'; payload: { orderId: string | null; modelId: string | null } }
+  | { type: 'SET_MODEL_ID'; payload: string };
 
 // ── 리듀서 ─────────────────────────────────────────────────────────
 function editorReducer(state: EditorStateV2, action: Action): EditorStateV2 {
@@ -281,6 +288,12 @@ function editorReducer(state: EditorStateV2, action: Action): EditorStateV2 {
       };
     }
 
+    case 'SET_ORDER_CONTEXT':
+      return { ...state, orderId: action.payload.orderId, modelId: action.payload.modelId };
+
+    case 'SET_MODEL_ID':
+      return { ...state, modelId: action.payload };
+
     default:
       return state;
   }
@@ -309,8 +322,21 @@ interface EditorContextValue {
 
 const EditorContext = createContext<EditorContextValue | null>(null);
 
-export function EditorProviderV2({ children }: { children: ReactNode }) {
+interface EditorProviderV2Props {
+  children: ReactNode;
+  orderId?: string | null;
+  modelId?: string | null;
+}
+
+export function EditorProviderV2({ children, orderId, modelId }: EditorProviderV2Props) {
   const [state, dispatch] = useReducer(editorReducer, DEFAULT_STATE);
+
+  useEffect(() => {
+    dispatch({
+      type: 'SET_ORDER_CONTEXT',
+      payload: { orderId: orderId ?? null, modelId: modelId ?? null },
+    });
+  }, [orderId, modelId]);
 
   const mmToPx = useCallback((mm: number) => mm * SCALE.MM_TO_PX * state.zoom, [state.zoom]);
   const pxToMm = useCallback((px: number) => px / SCALE.MM_TO_PX / state.zoom, [state.zoom]);
@@ -430,6 +456,7 @@ export function EditorProviderV2({ children }: { children: ReactNode }) {
       const component: ClosetComponent = {
         id: `unit-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         presetType,
+        furnitureCategory: 'wardrobe',
         cornerType,
         name: cornerType ? `${preset.name} (${cornerType === 'L' ? 'ㄱ자' : 'ㄴ자'})` : preset.name,
         shapeType: cornerType ? 'rounded-rect' : 'rect',

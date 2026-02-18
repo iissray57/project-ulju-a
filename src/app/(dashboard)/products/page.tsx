@@ -2,7 +2,7 @@ import { getProducts } from './actions';
 import { ProductList } from '@/components/products/product-list';
 
 export default async function ProductsPage() {
-  const result = await getProducts({ isActive: true });
+  const result = await getProducts({ isActive: true, limit: 1000 });
 
   if (result.error) {
     return (

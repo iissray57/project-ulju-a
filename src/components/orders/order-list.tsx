@@ -22,6 +22,7 @@ import {
 } from '@/lib/schemas/order-status';
 import { ExportButton } from '@/components/ui/export-button';
 import type { ExportColumn } from '@/lib/utils/export';
+import { WORK_TYPE_LABELS, type WorkType } from '@/lib/schemas/order';
 import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
 
 interface OrderListProps {
@@ -57,7 +58,7 @@ function formatDate(dateStr: string): string {
 const ORDER_EXPORT_COLUMNS: ExportColumn<OrderWithCustomer>[] = [
   { header: '주문번호', accessor: (r) => r.order_number },
   { header: '고객명', accessor: (r) => r.customer?.name },
-  { header: '유형', accessor: (r) => r.work_type },
+  { header: '유형', accessor: (r) => r.work_type ? (WORK_TYPE_LABELS[r.work_type as WorkType] ?? r.work_type) : '' },
   { header: '견적액', accessor: (r) => r.quotation_amount },
   { header: '확정액', accessor: (r) => r.confirmed_amount },
   { header: '상태', accessor: (r) => r.status ? ORDER_STATUS_LABELS[r.status as OrderStatus] : '' },
@@ -171,7 +172,7 @@ export function OrderList({ orders, total }: OrderListProps) {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
-                    {order.work_type || '유형 미정'}
+                    {order.work_type ? (WORK_TYPE_LABELS[order.work_type as WorkType] ?? order.work_type) : '유형 미정'}
                   </span>
                   {order.confirmed_amount ? (
                     <span className="font-semibold">
@@ -232,7 +233,7 @@ export function OrderList({ orders, total }: OrderListProps) {
                   <TableCell className="font-medium">{order.order_number}</TableCell>
                   <TableCell>{order.customer?.name || '고객 정보 없음'}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    {order.work_type || '-'}
+                    {order.work_type ? (WORK_TYPE_LABELS[order.work_type as WorkType] ?? order.work_type) : '-'}
                   </TableCell>
                   <TableCell className="text-right text-muted-foreground">
                     {order.quotation_amount ? formatCurrency(order.quotation_amount) : '-'}

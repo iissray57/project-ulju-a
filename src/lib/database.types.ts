@@ -409,8 +409,6 @@ export type Database = {
           cancelled_from_status:
             | Database["public"]["Enums"]["order_status"]
             | null
-          closet_spec: Json | null
-          closet_type: string | null
           confirmed_amount: number | null
           cost_confirmed_at: string | null
           created_at: string | null
@@ -427,12 +425,15 @@ export type Database = {
           preparation_checklist: Json | null
           quotation_amount: number | null
           revenue_confirmed_at: string | null
+          settlement_memo: string | null
           site_address: string | null
           site_memo: string | null
           site_photos: string[] | null
           status: Database["public"]["Enums"]["order_status"] | null
           updated_at: string | null
           user_id: string
+          work_spec: Json | null
+          work_type: string | null
         }
         Insert: {
           cancellation_reason?: string | null
@@ -440,8 +441,6 @@ export type Database = {
           cancelled_from_status?:
             | Database["public"]["Enums"]["order_status"]
             | null
-          closet_spec?: Json | null
-          closet_type?: string | null
           confirmed_amount?: number | null
           cost_confirmed_at?: string | null
           created_at?: string | null
@@ -458,12 +457,15 @@ export type Database = {
           preparation_checklist?: Json | null
           quotation_amount?: number | null
           revenue_confirmed_at?: string | null
+          settlement_memo?: string | null
           site_address?: string | null
           site_memo?: string | null
           site_photos?: string[] | null
           status?: Database["public"]["Enums"]["order_status"] | null
           updated_at?: string | null
           user_id?: string
+          work_spec?: Json | null
+          work_type?: string | null
         }
         Update: {
           cancellation_reason?: string | null
@@ -471,8 +473,6 @@ export type Database = {
           cancelled_from_status?:
             | Database["public"]["Enums"]["order_status"]
             | null
-          closet_spec?: Json | null
-          closet_type?: string | null
           confirmed_amount?: number | null
           cost_confirmed_at?: string | null
           created_at?: string | null
@@ -489,12 +489,15 @@ export type Database = {
           preparation_checklist?: Json | null
           quotation_amount?: number | null
           revenue_confirmed_at?: string | null
+          settlement_memo?: string | null
           site_address?: string | null
           site_memo?: string | null
           site_photos?: string[] | null
           status?: Database["public"]["Enums"]["order_status"] | null
           updated_at?: string | null
           user_id?: string
+          work_spec?: Json | null
+          work_type?: string | null
         }
         Relationships: [
           {
@@ -572,6 +575,7 @@ export type Database = {
           min_stock: number | null
           name: string
           sku: string | null
+          supplier_id: string | null
           unit: string | null
           unit_price: number | null
           updated_at: string | null
@@ -590,6 +594,7 @@ export type Database = {
           min_stock?: number | null
           name: string
           sku?: string | null
+          supplier_id?: string | null
           unit?: string | null
           unit_price?: number | null
           updated_at?: string | null
@@ -608,13 +613,22 @@ export type Database = {
           min_stock?: number | null
           name?: string
           sku?: string | null
+          supplier_id?: string | null
           unit?: string | null
           unit_price?: number | null
           updated_at?: string | null
           user_id?: string
           width?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       purchase_order_items: {
         Row: {
@@ -672,6 +686,7 @@ export type Database = {
           created_at: string | null
           discount_rate: number | null
           id: string
+          image_url: string | null
           memo: string | null
           order_date: string | null
           payment_date: string | null
@@ -689,6 +704,7 @@ export type Database = {
           created_at?: string | null
           discount_rate?: number | null
           id?: string
+          image_url?: string | null
           memo?: string | null
           order_date?: string | null
           payment_date?: string | null
@@ -706,6 +722,7 @@ export type Database = {
           created_at?: string | null
           discount_rate?: number | null
           id?: string
+          image_url?: string | null
           memo?: string | null
           order_date?: string | null
           payment_date?: string | null
@@ -728,6 +745,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       quote_requests: {
         Row: {
@@ -988,19 +1035,15 @@ export type Database = {
         | "cancelled"
       po_status: "draft" | "ordered" | "received" | "settled" | "cost_confirmed"
       product_category:
-        | "angle_frame"
+        | "angle"
+        | "plywood"
+        | "raw_sheet"
         | "system_frame"
-        | "shelf"
-        | "hanger_bar"
-        | "drawer"
-        | "door"
-        | "hardware"
-        | "accessory"
-        | "etc"
         | "top_panel"
-        | "mirror"
-        | "lighting"
-        | "tray"
+        | "drawer"
+        | "mirror_cabinet"
+        | "blind"
+        | "curtain"
       schedule_type:
         | "measurement"
         | "installation"
@@ -1153,19 +1196,15 @@ export const Constants = {
       ],
       po_status: ["draft", "ordered", "received", "settled", "cost_confirmed"],
       product_category: [
-        "angle_frame",
+        "angle",
+        "plywood",
+        "raw_sheet",
         "system_frame",
-        "shelf",
-        "hanger_bar",
-        "drawer",
-        "door",
-        "hardware",
-        "accessory",
-        "etc",
         "top_panel",
-        "mirror",
-        "lighting",
-        "tray",
+        "drawer",
+        "mirror_cabinet",
+        "blind",
+        "curtain",
       ],
       schedule_type: [
         "measurement",

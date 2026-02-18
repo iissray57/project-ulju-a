@@ -112,7 +112,6 @@ export function generateQuotationDocument(data: QuotationData) {
           label: '견적번호',
           value: order.order_number,
         }),
-        React.createElement(PDFRow, { label: '상태', value: order.status }),
         React.createElement(PDFRow, {
           label: '설치예정일',
           value: formatDate(order.installation_date),

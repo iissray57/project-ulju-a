@@ -100,6 +100,63 @@ export async function getCustomer(id: string): Promise<ActionResult<Customer>> {
 }
 
 /**
+ * 고객 상세 조회 (주문 목록 포함)
+ */
+export async function getCustomerWithOrders(id: string): Promise<ActionResult<Customer & {
+  orders: {
+    id: string;
+    order_number: string;
+    status: string | null;
+    work_type: string | null;
+    quotation_amount: number | null;
+    confirmed_amount: number | null;
+    measurement_date: string | null;
+    installation_date: string | null;
+    created_at: string | null;
+  }[];
+}>> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: '인증이 필요합니다' };
+    }
+
+    const { data, error } = await supabase
+      .from('customers')
+      .select(`
+        *,
+        orders(id, order_number, status, work_type, quotation_amount, confirmed_amount, measurement_date, installation_date, created_at)
+      `)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (error) {
+      return { error: `고객 조회 실패: ${error.message}` };
+    }
+
+    if (!data) {
+      return { error: '고객을 찾을 수 없습니다' };
+    }
+
+    // orders 정렬 (최신순)
+    const orders = (data.orders || []).sort((a: { created_at: string | null }, b: { created_at: string | null }) =>
+      (b.created_at || '').localeCompare(a.created_at || '')
+    );
+
+    return { data: { ...data, orders } };
+  } catch (err) {
+    return {
+      error: `고객 조회 중 오류 발생: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+/**
  * 고객 생성 (중복 시 기존 고객 반환)
  */
 export async function createCustomer(

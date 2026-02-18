@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import type { Database, TablesInsert, TablesUpdate } from '@/lib/database.types';
 import { orderMaterialSchema, type OrderMaterialFormData } from '@/lib/schemas/order-material';
 import { revalidatePath } from 'next/cache';
+import type { ChecklistItem } from '@/lib/schemas/checklist';
+import { DEFAULT_PREPARATION_CHECKLIST } from '@/lib/schemas/checklist';
 
 type OrderMaterialRow = Database['public']['Tables']['order_materials']['Row'];
 type OrderMaterialInsert = TablesInsert<'order_materials'>;
@@ -118,6 +120,17 @@ export async function addOrderMaterial(
       return { error: error.message };
     }
 
+    // 품목명 조회 → 체크리스트에 자동 추가
+    const { data: product } = await supabase
+      .from('products')
+      .select('name')
+      .eq('id', parsed.data.product_id)
+      .single();
+
+    if (product) {
+      await addMaterialToChecklist(supabase, parsed.data.order_id, parsed.data.product_id, product.name);
+    }
+
     revalidatePath('/orders');
     revalidatePath(`/orders/${parsed.data.order_id}`);
     return { data };
@@ -205,10 +218,10 @@ export async function removeOrderMaterial(id: string): Promise<ActionResult<void
       return { error: '인증이 필요합니다.' };
     }
 
-    // 현재 자재 정보 조회 (order_id 확인용)
+    // 현재 자재 정보 조회 (order_id + product_id 확인용)
     const { data: material, error: fetchError } = await supabase
       .from('order_materials')
-      .select('order_id')
+      .select('order_id, product_id')
       .eq('id', id)
       .eq('user_id', user.id)
       .single();
@@ -228,6 +241,11 @@ export async function removeOrderMaterial(id: string): Promise<ActionResult<void
     if (deleteError) {
       console.error('[removeOrderMaterial] Delete error:', deleteError);
       return { error: deleteError.message };
+    }
+
+    // 체크리스트에서 해당 자재 항목 제거
+    if (material.product_id) {
+      await removeMaterialFromChecklist(supabase, material.order_id, material.product_id);
     }
 
     revalidatePath('/orders');
@@ -289,5 +307,73 @@ export async function getOrderMaterialSummary(
   } catch (err) {
     console.error('[getOrderMaterialSummary] Unexpected error:', err);
     return { error: '자재 요약 조회 중 오류가 발생했습니다.' };
+  }
+}
+
+// ── 체크리스트 연동 헬퍼 ─────────────────────────────────────
+
+function materialChecklistId(productId: string) {
+  return `mat-${productId}`;
+}
+
+async function addMaterialToChecklist(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orderId: string,
+  productId: string,
+  productName: string
+) {
+  try {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('preparation_checklist')
+      .eq('id', orderId)
+      .single();
+
+    const existing = (order?.preparation_checklist as ChecklistItem[] | null) ?? [...DEFAULT_PREPARATION_CHECKLIST];
+    const newId = materialChecklistId(productId);
+
+    // 이미 존재하면 스킵
+    if (existing.some((item) => item.id === newId)) return;
+
+    const newItem: ChecklistItem = {
+      id: newId,
+      label: `${productName} 자재 확보`,
+      checked: false,
+    };
+
+    await supabase
+      .from('orders')
+      .update({ preparation_checklist: [...existing, newItem] })
+      .eq('id', orderId);
+  } catch (err) {
+    console.error('[addMaterialToChecklist] Error:', err);
+  }
+}
+
+async function removeMaterialFromChecklist(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orderId: string,
+  productId: string
+) {
+  try {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('preparation_checklist')
+      .eq('id', orderId)
+      .single();
+
+    const existing = (order?.preparation_checklist as ChecklistItem[] | null) ?? [...DEFAULT_PREPARATION_CHECKLIST];
+    const targetId = materialChecklistId(productId);
+    const filtered = existing.filter((item) => item.id !== targetId);
+
+    // 변경이 있을 때만 업데이트
+    if (filtered.length !== existing.length) {
+      await supabase
+        .from('orders')
+        .update({ preparation_checklist: filtered })
+        .eq('id', orderId);
+    }
+  } catch (err) {
+    console.error('[removeMaterialFromChecklist] Error:', err);
   }
 }

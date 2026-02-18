@@ -8,6 +8,7 @@ import {
   ORDER_STATUS_COLORS,
   type OrderStatus,
 } from '@/lib/schemas/order-status';
+import { WORK_TYPE_LABELS, type WorkType } from '@/lib/schemas/order';
 import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
 
 interface OrderTimelineViewProps {
@@ -123,7 +124,7 @@ export function OrderTimelineView({ orders }: OrderTimelineViewProps) {
 
                         {/* 유형 + 금액 */}
                         <div className="text-sm text-muted-foreground">
-                          {order.work_type || '(미정)'} ·{' '}
+                          {order.work_type ? (WORK_TYPE_LABELS[order.work_type as WorkType] ?? order.work_type) : '(미정)'} ·{' '}
                           {order.confirmed_amount !== null
                             ? formatCurrency(order.confirmed_amount)
                             : order.quotation_amount

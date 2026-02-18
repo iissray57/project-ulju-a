@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
+import { PAYMENT_METHOD_LABELS, type PaymentMethod } from '@/lib/schemas/order';
 
 interface OrderDetailSectionsProps {
   order: OrderWithCustomer;
@@ -130,8 +131,10 @@ export function OrderDetailSections({ order }: OrderDetailSectionsProps) {
             </div>
             {order.payment_method && (
               <div>
-                <div className="text-sm text-muted-foreground mb-1">결제 방식</div>
-                <div className="font-medium">{order.payment_method}</div>
+                <div className="text-sm text-muted-foreground mb-1">결제 수단</div>
+                <div className="font-medium">
+                  {PAYMENT_METHOD_LABELS[order.payment_method as PaymentMethod] || order.payment_method}
+                </div>
               </div>
             )}
             {order.payment_date && (
@@ -181,6 +184,16 @@ export function OrderDetailSections({ order }: OrderDetailSectionsProps) {
             </CardHeader>
             <CardContent>
               <div className="whitespace-pre-wrap text-sm">{order.memo}</div>
+            </CardContent>
+          </Card>
+        )}
+        {order.settlement_memo && (
+          <Card>
+            <CardHeader>
+              <CardTitle>정산 메모</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="whitespace-pre-wrap text-sm">{order.settlement_memo}</div>
             </CardContent>
           </Card>
         )}

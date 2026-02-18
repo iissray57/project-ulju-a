@@ -43,18 +43,6 @@ export async function uploadImage(
       return { error: '파일 크기가 5MB를 초과합니다.' };
     }
 
-    // Ensure bucket exists (defensive)
-    const { error: bucketError } = await supabase.storage.createBucket(BUCKET, {
-      public: true,
-      fileSizeLimit: MAX_SIZE,
-    });
-
-    // Ignore "already exists" error
-    if (bucketError && !bucketError.message.includes('already exists')) {
-      console.error('Bucket creation error:', bucketError);
-      // Continue anyway - bucket might exist
-    }
-
     // Generate file path
     const timestamp = Date.now();
     const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');

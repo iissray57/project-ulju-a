@@ -13,6 +13,16 @@ export const WORK_TYPE_LABELS: Record<WorkType, string> = {
   demolition: '철거',
 };
 
+// 결제 수단
+export const PAYMENT_METHODS = ['bank_transfer', 'cash', 'card'] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  bank_transfer: '계좌이체',
+  cash: '현금',
+  card: '카드',
+};
+
 // 주문 생성/수정 폼 스키마
 export const orderFormSchema = z.object({
   customer_id: z.string().optional(), // 신규 고객 등록 시 빈 값 허용
@@ -25,6 +35,8 @@ export const orderFormSchema = z.object({
   site_address: z.string().optional(),
   site_memo: z.string().optional(),
   memo: z.string().optional(),
+  payment_method: z.enum(PAYMENT_METHODS).optional(),
+  settlement_memo: z.string().optional(),
 });
 
 export type OrderFormData = z.infer<typeof orderFormSchema>;

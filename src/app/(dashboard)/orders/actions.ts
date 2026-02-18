@@ -5,7 +5,6 @@ import type { Database, TablesInsert, TablesUpdate } from '@/lib/database.types'
 import { orderFormSchema, type OrderFormData } from '@/lib/schemas/order';
 import {
   canTransition,
-  canTransitionBackward,
   type OrderStatus as SchemaOrderStatus
 } from '@/lib/schemas/order-status';
 import { syncOrderSchedule, syncOrderDateChange } from '@/lib/utils/order-schedule-sync';
@@ -27,16 +26,12 @@ export interface GetOrdersParams {
 }
 
 // 목록 조회 결과 (customer 정보 포함)
-// Note: DB 타입 outdated - work_type, work_spec 필드 수동 추가
 export interface OrderWithCustomer extends OrderRow {
   customer: {
     id: string;
     name: string;
     phone: string;
   } | null;
-  // DB에 있지만 타입에 없는 필드들 (supabase gen types 재실행 필요)
-  work_type?: string | null;
-  work_spec?: Record<string, unknown> | null;
 }
 
 // 공통 결과 타입
@@ -275,6 +270,12 @@ export async function updateOrder(
         site_memo: parsed.data.site_memo ?? null,
       }),
       ...(parsed.data.memo !== undefined && { memo: parsed.data.memo ?? null }),
+      ...(parsed.data.payment_method !== undefined && {
+        payment_method: parsed.data.payment_method ?? null,
+      }),
+      ...(parsed.data.settlement_memo !== undefined && {
+        settlement_memo: parsed.data.settlement_memo ?? null,
+      }),
       updated_at: new Date().toISOString(),
     };
 
@@ -411,8 +412,6 @@ export async function transitionOrderStatus(
       };
     }
 
-    const isBackward = canTransitionBackward(currentStatus, newStatus);
-
     // 취소 처리
     if (newStatus === 'cancelled') {
       // 작업 완료 이후는 취소 불가
@@ -475,4 +474,37 @@ export async function transitionOrderStatus(
     console.error('[transitionOrderStatus] Unexpected error:', err);
     return { error: '상태 전이 중 오류가 발생했습니다.' };
   }
+}
+
+/**
+ * 주문의 모델/자재 등록 여부 조회 (견적 전환 검증용)
+ */
+export async function getOrderReadiness(orderId: string): Promise<{
+  hasModels: boolean;
+  hasMaterials: boolean;
+  modelCount: number;
+  materialCount: number;
+}> {
+  const supabase = await createClient();
+
+  const [modelsResult, materialsResult] = await Promise.all([
+    supabase
+      .from('closet_models')
+      .select('id', { count: 'exact', head: true })
+      .eq('order_id', orderId),
+    supabase
+      .from('order_materials')
+      .select('id', { count: 'exact', head: true })
+      .eq('order_id', orderId),
+  ]);
+
+  const modelCount = modelsResult.count ?? 0;
+  const materialCount = materialsResult.count ?? 0;
+
+  return {
+    hasModels: modelCount > 0,
+    hasMaterials: materialCount > 0,
+    modelCount,
+    materialCount,
+  };
 }

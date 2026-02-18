@@ -8,6 +8,7 @@ import { ViewSwitcher } from '@/components/common/view-switcher';
 import { Button } from '@/components/ui/button';
 import { OrderList } from './order-list';
 import { OrderKanbanView } from './order-kanban-view';
+import { OrderTimelineView } from './order-timeline-view';
 import type { ViewConfig, ViewType } from '@/lib/types/views';
 import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
 
@@ -147,11 +148,7 @@ export function OrdersViewContainer({
       {/* View Content */}
       {view === 'kanban' && <OrderKanbanView orders={orders} />}
       {view === 'list' && <OrderList orders={orders} total={total} />}
-      {view === 'timeline' && (
-        <div className="flex items-center justify-center py-20 text-muted-foreground">
-          타임라인 뷰는 준비 중입니다
-        </div>
-      )}
+      {view === 'timeline' && <OrderTimelineView orders={orders} />}
 
       {/* Mobile FAB */}
       <Link

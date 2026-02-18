@@ -7,6 +7,7 @@ import {
   getStatusLabel,
   getStatusColor,
 } from '@/lib/schemas/order-status';
+import { WORK_TYPE_LABELS, type WorkType } from '@/lib/schemas/order';
 import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
 
 function formatCurrency(amount: number): string {
@@ -82,7 +83,7 @@ export function OrderCard({
 
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground truncate">
-            {order.work_type || '유형 미정'}
+            {order.work_type ? (WORK_TYPE_LABELS[order.work_type as WorkType] ?? order.work_type) : '유형 미정'}
           </span>
           {amount ? (
             <span className="font-semibold shrink-0 ml-2">

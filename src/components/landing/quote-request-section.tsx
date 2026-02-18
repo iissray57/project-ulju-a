@@ -11,12 +11,13 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 
 const quoteSchema = z.object({
   customerName: z.string().min(2, '이름을 입력해주세요'),
   customerPhone: z.string().min(10, '연락처를 입력해주세요'),
   customerEmail: z.string().email('올바른 이메일을 입력해주세요').optional().or(z.literal('')),
-  category: z.enum(['blind', 'curtain', 'angle'], { message: '서비스를 선택해주세요' }),
+  category: z.enum(['angle', 'curtain', 'system'], { message: '서비스를 선택해주세요' }),
   address: z.string().optional(),
   description: z.string().optional(),
 });
@@ -24,9 +25,9 @@ const quoteSchema = z.object({
 type QuoteFormData = z.infer<typeof quoteSchema>;
 
 const CATEGORY_OPTIONS = [
-  { value: 'blind', label: '블라인드' },
-  { value: 'curtain', label: '커튼' },
   { value: 'angle', label: '앵글 옷장' },
+  { value: 'curtain', label: '커튼' },
+  { value: 'system', label: '시스템 수납' },
 ];
 
 export function QuoteRequestSection() {
@@ -49,18 +50,20 @@ export function QuoteRequestSection() {
   const onSubmit = async (data: QuoteFormData) => {
     setIsSubmitting(true);
     try {
-      // TODO: Supabase에 저장
-      // const { error } = await supabase.from('quote_requests').insert({
-      //   customer_name: data.customerName,
-      //   customer_phone: data.customerPhone,
-      //   customer_email: data.customerEmail || null,
-      //   category: data.category,
-      //   address: data.address || null,
-      //   description: data.description || null,
-      // });
+      const supabase = createClient();
+      const { error } = await supabase.from('quote_requests').insert({
+        customer_name: data.customerName,
+        customer_phone: data.customerPhone,
+        customer_email: data.customerEmail || null,
+        category: data.category,
+        address: data.address || null,
+        description: data.description || null,
+      });
 
-      // 임시: 성공 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (error) {
+        console.error('견적 요청 저장 실패:', error);
+        return;
+      }
 
       setIsSuccess(true);
       reset();

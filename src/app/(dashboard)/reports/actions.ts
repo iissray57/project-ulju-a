@@ -57,17 +57,6 @@ export async function saveReport(
     const timestamp = Date.now();
     const storagePath = `${user.id}/${orderId}/${type}_${timestamp}.pdf`;
 
-    // Ensure bucket exists (try to create it, ignore if already exists)
-    const { error: bucketError } = await supabase.storage.createBucket('reports', {
-      public: false,
-      fileSizeLimit: 10485760, // 10MB
-    });
-
-    if (bucketError && !bucketError.message.includes('already exists')) {
-      console.error('[saveReport] Bucket creation error:', bucketError);
-      // Continue anyway - bucket might already exist
-    }
-
     // Upload file
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('reports')

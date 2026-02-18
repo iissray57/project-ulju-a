@@ -11,7 +11,7 @@ import { OrderChecklist } from '@/components/orders/order-checklist';
 import { OrderModels } from '@/components/orders/order-models';
 import { getOrderChecklist } from '../checklist-actions';
 import { QuotationDownloadButton } from '@/components/orders/quotation-download-button';
-import { LEGACY_STATUS_MAP, type OrderStatus } from '@/lib/schemas/order-status';
+import { SitePhotoUpload } from '@/components/orders/site-photo-upload';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -62,7 +62,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
       <Separator />
 
       {/* 상태 바 */}
-      <OrderStatusBar orderId={id} currentStatus={(LEGACY_STATUS_MAP[order.status || 'inquiry'] || 'inquiry') as OrderStatus} />
+      <OrderStatusBar order={order} />
 
       <Separator />
 
@@ -80,6 +80,17 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
       {/* 모델링 */}
       <OrderModels orderId={id} />
+
+      <Separator />
+
+      {/* 현장 사진 */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">현장 사진</h2>
+        <SitePhotoUpload
+          orderId={id}
+          existingPhotos={order.site_photos || []}
+        />
+      </div>
 
       <Separator />
 

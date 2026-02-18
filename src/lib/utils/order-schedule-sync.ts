@@ -43,8 +43,8 @@ export async function syncOrderSchedule(
     return;
   }
 
-  // measurement 전이 시: measurement 스케줄 생성
-  if (newStatus === 'measurement' && orderData.measurement_date) {
+  // inquiry 상태에서 measurement 스케줄 생성 (실측일이 있으면)
+  if (newStatus === 'inquiry' && orderData.measurement_date) {
     const { data: existing } = await supabase
       .from('schedules')
       .select('id')
@@ -69,8 +69,8 @@ export async function syncOrderSchedule(
     }
   }
 
-  // confirmed 전이 시: installation 스케줄 생성
-  if (newStatus === 'confirmed' && orderData.installation_date) {
+  // quotation 전이 시: installation 스케줄 생성 (설치일이 있으면)
+  if (newStatus === 'quotation' && orderData.installation_date) {
     const { data: existing } = await supabase
       .from('schedules')
       .select('id')

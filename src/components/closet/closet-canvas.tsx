@@ -11,6 +11,7 @@ import type { MapControls as MapControlsImpl } from 'three-stdlib';
 
 function Scene() {
   const {
+    viewMode,
     components,
     gridSize,
     cameraResetCounter,
@@ -54,20 +55,30 @@ function Scene() {
     ? components.find((c) => c.id === selectedId)
     : null;
 
+  // Camera position based on view mode
+  const cameraPosition: [number, number, number] =
+    viewMode === 'plan' ? [0, 10, 0] :
+    viewMode === 'elevation' ? [0, 12, 25] :
+    [15, 15, 15]; // 3D view
+
+  const cameraUp: [number, number, number] =
+    viewMode === 'elevation' ? [0, 1, 0] : [0, 0, -1];
+
   return (
     <>
       <OrthographicCamera
         makeDefault
-        position={[0, 10, 0]}
-        zoom={zoom}
+        position={cameraPosition}
+        up={cameraUp}
+        zoom={viewMode === 'elevation' ? zoom * 0.8 : zoom}
         near={0.1}
         far={100}
-        key={`ortho-${cameraResetCounter}`}
+        key={`ortho-${cameraResetCounter}-${viewMode}`}
       />
 
       <MapControls
         ref={controlsRef}
-        enableRotate={false}
+        enableRotate={viewMode === '3d'}
         enablePan
         enableZoom
         screenSpacePanning
@@ -104,7 +115,7 @@ function Scene() {
 
       {/* Dimension labels for the selected component */}
       {showDimensions && selectedComponent && (
-        <DimensionLabel component={selectedComponent} />
+        <DimensionLabel component={selectedComponent} viewMode={viewMode} />
       )}
     </>
   );

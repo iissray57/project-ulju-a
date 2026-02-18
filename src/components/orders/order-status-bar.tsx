@@ -21,19 +21,23 @@ import {
   ORDER_TRANSITIONS,
   type OrderStatus,
 } from '@/lib/schemas/order-status';
-import { transitionOrderStatus } from '@/app/(dashboard)/orders/actions';
+import { transitionOrderStatus, type OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
 import { toast } from 'sonner';
+import { StatusTransitionFormDialog } from './status-transition-form-dialog';
 
 interface OrderStatusBarProps {
-  orderId: string;
-  currentStatus: OrderStatus;
+  order: OrderWithCustomer;
 }
 
-export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) {
+export function OrderStatusBar({ order }: OrderStatusBarProps) {
+  const orderId = order.id;
+  const currentStatus = order.status as OrderStatus;
   const router = useRouter();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
+  const [showTransitionDialog, setShowTransitionDialog] = useState(false);
+  const [targetStatus, setTargetStatus] = useState<OrderStatus | null>(null);
 
   const availableTransitions = ORDER_TRANSITIONS[currentStatus];
 
@@ -47,8 +51,9 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
       return;
     }
 
-    // 상태 전이 실행
-    await executeTransition(newStatus);
+    // 필수값 검증 다이얼로그 표시
+    setTargetStatus(newStatus);
+    setShowTransitionDialog(true);
   };
 
   const executeTransition = async (newStatus: OrderStatus) => {
@@ -87,21 +92,21 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
   };
 
   // 정방향 전이 (다음 상태)
-  const forwardTransition = availableTransitions.find((t) => {
+  const forwardTransition = availableTransitions.forward.find((t) => {
     if (t === 'cancelled') return false;
     const targetIndex = normalStatuses.indexOf(t);
     return targetIndex > currentIndex;
   });
 
   // 역방향 전이 (이전 상태)
-  const backwardTransition = availableTransitions.find((t) => {
+  const backwardTransition = availableTransitions.backward.find((t) => {
     if (t === 'cancelled') return false;
     const targetIndex = normalStatuses.indexOf(t);
     return targetIndex < currentIndex;
   });
 
   // 취소 가능 여부
-  const canCancel = availableTransitions.includes('cancelled');
+  const canCancel = availableTransitions.forward.includes('cancelled');
 
   return (
     <div className="space-y-6">
@@ -195,7 +200,7 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
       )}
 
       {/* 전이 버튼 */}
-      {availableTransitions.length > 0 && (
+      {(availableTransitions.forward.length > 0 || availableTransitions.backward.length > 0) && (
         <div className="flex gap-3 flex-wrap">
           {forwardTransition && (
             <Button
@@ -263,6 +268,17 @@ export function OrderStatusBar({ orderId, currentStatus }: OrderStatusBarProps) 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 상태 전이 필수값 입력 다이얼로그 */}
+      {targetStatus && (
+        <StatusTransitionFormDialog
+          open={showTransitionDialog}
+          onOpenChange={setShowTransitionDialog}
+          order={order}
+          fromStatus={currentStatus}
+          toStatus={targetStatus}
+        />
+      )}
 
     </div>
   );

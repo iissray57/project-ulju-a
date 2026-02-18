@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -29,7 +30,20 @@ export function ScheduleCalendarView({
   initialMonth,
   onMonthChange,
 }: ScheduleCalendarViewProps) {
+  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedSchedule, setSelectedSchedule] = useState<ScheduleWithOrder | null>(null);
+
+  // 일정 클릭 핸들러 - 유형에 따라 다른 페이지로 이동
+  const handleScheduleClick = (schedule: ScheduleWithOrder) => {
+    if (schedule.order_id) {
+      // 주문 관련 일정 → 주문 상세 페이지로 이동
+      router.push(`/orders/${schedule.order_id}`);
+    } else {
+      // 개인 일정 → 상세 뷰 표시
+      setSelectedSchedule(schedule);
+    }
+  };
 
   // 날짜별 일정 맵 생성
   const schedulesByDate = new Map<string, ScheduleWithOrder[]>();
@@ -179,6 +193,61 @@ export function ScheduleCalendarView({
         </div>
       </div>
 
+      {/* 개인 일정 상세 뷰 */}
+      {selectedSchedule && !selectedSchedule.order_id && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setSelectedSchedule(null)}>
+          <div className="w-full max-w-md mx-4 bg-card border rounded-lg shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="font-semibold">개인 일정</h3>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedSchedule(null)}>
+                ✕
+              </Button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <div className="text-sm text-muted-foreground mb-1">제목</div>
+                <div className="font-medium">{selectedSchedule.title}</div>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <div className="text-sm text-muted-foreground mb-1">날짜</div>
+                  <div>{selectedSchedule.scheduled_date}</div>
+                </div>
+                {selectedSchedule.scheduled_time && (
+                  <div className="flex-1">
+                    <div className="text-sm text-muted-foreground mb-1">시간</div>
+                    <div>{selectedSchedule.scheduled_time}</div>
+                  </div>
+                )}
+              </div>
+              {selectedSchedule.location && (
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">장소</div>
+                  <div>{selectedSchedule.location}</div>
+                </div>
+              )}
+              {selectedSchedule.memo && (
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">메모</div>
+                  <div className="whitespace-pre-wrap text-sm">{selectedSchedule.memo}</div>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  'text-xs px-2 py-0.5 rounded',
+                  SCHEDULE_TYPE_COLORS[selectedSchedule.type as keyof typeof SCHEDULE_TYPE_COLORS]
+                )}>
+                  {SCHEDULE_TYPE_LABELS[selectedSchedule.type as keyof typeof SCHEDULE_TYPE_LABELS]}
+                </span>
+                {selectedSchedule.is_completed && (
+                  <span className="text-xs text-green-500">완료</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 선택된 날짜 일정 목록 */}
       {selectedDate && (
         <div className="w-full lg:w-80 border rounded-lg p-4 bg-card">
@@ -196,9 +265,10 @@ export function ScheduleCalendarView({
                   SCHEDULE_TYPE_LABELS[schedule.type as keyof typeof SCHEDULE_TYPE_LABELS];
 
                 return (
-                  <div
+                  <button
                     key={schedule.id}
-                    className="p-3 border rounded-md bg-card hover:bg-accent transition-colors"
+                    onClick={() => handleScheduleClick(schedule)}
+                    className="w-full text-left p-3 border rounded-md bg-card hover:bg-accent transition-colors cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -219,7 +289,8 @@ export function ScheduleCalendarView({
                           </p>
                         )}
                         {schedule.order && (
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-xs text-primary mt-1 flex items-center gap-1">
+                            <ExternalLink className="h-3 w-3" />
                             주문: {schedule.order.order_number}
                           </p>
                         )}
@@ -230,7 +301,7 @@ export function ScheduleCalendarView({
                         </span>
                       )}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>

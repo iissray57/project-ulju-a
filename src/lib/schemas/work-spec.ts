@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const closetSectionSchema = z.object({
+export const workSectionSchema = z.object({
   type: z.enum(['shelf', 'hanger', 'drawer', 'open']),
   width: z.number().positive(),
   position: z.object({
@@ -12,17 +12,19 @@ export const closetSectionSchema = z.object({
   drawer_count: z.number().int().nonnegative().optional(),
 });
 
-export const closetSpecSchema = z.object({
-  width: z.number().positive(),
-  height: z.number().positive(),
-  depth: z.number().positive(),
-  sections: z.array(closetSectionSchema),
-  frame_type: z.enum(['angle', 'system', 'mixed']),
+export const workSpecSchema = z.object({
+  width: z.number().positive().optional(),
+  height: z.number().positive().optional(),
+  depth: z.number().positive().optional(),
+  sections: z.array(workSectionSchema).optional(),
+  frame_type: z.enum(['angle', 'system', 'mixed']).optional(),
   color: z.string().optional(),
   material: z.string().optional(),
   door_type: z.enum(['none', 'sliding', 'hinged']).optional(),
   notes: z.string().optional(),
+  // 커스텀 텍스트 (자유 입력)
+  custom_text: z.string().optional(),
 });
 
-export type ClosetSpec = z.infer<typeof closetSpecSchema>;
-export type ClosetSection = z.infer<typeof closetSectionSchema>;
+export type WorkSpec = z.infer<typeof workSpecSchema>;
+export type WorkSection = z.infer<typeof workSectionSchema>;

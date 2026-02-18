@@ -1,6 +1,5 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { SupplierList } from '@/components/suppliers/supplier-list';
+import { SupplierFormDialog } from '@/components/suppliers/supplier-form-dialog';
 import { getSuppliers } from './actions';
 
 interface PageProps {
@@ -40,9 +39,7 @@ export default async function SuppliersPage({ searchParams }: PageProps) {
             총 {total}개의 거래처가 등록되어 있습니다
           </p>
         </div>
-        <Button asChild>
-          <Link href="/suppliers/new">신규 거래처 등록</Link>
-        </Button>
+        <SupplierFormDialog />
       </div>
 
       <SupplierList suppliers={suppliers} total={total} />

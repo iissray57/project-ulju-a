@@ -30,8 +30,8 @@ function formatDate(dateStr: string | null) {
   }
 }
 
-// 옷장 유형 라벨
-function getClosetTypeLabel(type: string | null) {
+// 작업 유형 라벨
+function getWorkTypeLabel(type: string | null) {
   if (!type) return '-';
   switch (type) {
     case 'angle':
@@ -40,6 +40,10 @@ function getClosetTypeLabel(type: string | null) {
       return '시스템형';
     case 'mixed':
       return '혼합형';
+    case 'curtain':
+      return '커튼 설치';
+    case 'demolition':
+      return '철거';
     default:
       return type;
   }
@@ -77,21 +81,21 @@ export function OrderDetailSections({ order }: OrderDetailSectionsProps) {
           </CardContent>
         </Card>
 
-        {/* 옷장 사양 */}
+        {/* 작업 사양 */}
         <Card>
           <CardHeader>
-            <CardTitle>옷장 사양</CardTitle>
+            <CardTitle>작업 사양</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <div className="text-sm text-muted-foreground mb-1">유형</div>
-              <div className="font-medium">{getClosetTypeLabel(order.closet_type)}</div>
+              <div className="font-medium">{getWorkTypeLabel(order.work_type ?? null)}</div>
             </div>
-            {order.closet_spec && typeof order.closet_spec === 'object' && (
+            {order.work_spec && typeof order.work_spec === 'object' && (
               <div>
                 <div className="text-sm text-muted-foreground mb-1">치수</div>
                 <div className="font-medium text-sm space-y-1">
-                  {Object.entries(order.closet_spec as Record<string, unknown>).map(
+                  {Object.entries(order.work_spec as Record<string, unknown>).map(
                     ([key, value]) => (
                       <div key={key}>
                         <span className="text-muted-foreground">{key}:</span>{' '}

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Pencil } from 'lucide-react';
+import { Plus, Trash2, Pencil, Search, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,10 +28,12 @@ import {
   updatePurchaseOrderItem,
   removePurchaseOrderItem,
 } from '@/app/(dashboard)/purchases/actions';
+import { getProducts } from '@/app/(dashboard)/products/actions';
 import type { Database } from '@/lib/database.types';
 import { toast } from 'sonner';
 
 type PurchaseOrderItem = Database['public']['Tables']['purchase_order_items']['Row'];
+type Product = Database['public']['Tables']['products']['Row'];
 
 interface PurchaseOrderItemsProps {
   poId: string;
@@ -40,6 +42,7 @@ interface PurchaseOrderItemsProps {
 
 interface ItemFormData {
   product_id?: string;
+  product_name?: string;
   quantity: number;
   unit_price: number;
   memo?: string;
@@ -52,10 +55,41 @@ export function PurchaseOrderItems({ poId, items }: PurchaseOrderItemsProps) {
   const [editingItem, setEditingItem] = useState<PurchaseOrderItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 품목 검색
+  const [showProductSearch, setShowProductSearch] = useState(false);
+  const [productSearch, setProductSearch] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
   const [formData, setFormData] = useState<ItemFormData>({
     quantity: 1,
     unit_price: 0,
   });
+
+  // 품목 검색 로드
+  useEffect(() => {
+    if (showProductSearch) {
+      const loadProducts = async () => {
+        const result = await getProducts({ search: productSearch.trim(), limit: 20, isActive: true });
+        if (result.data) {
+          setProducts(result.data);
+        }
+      };
+      const timer = setTimeout(loadProducts, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [showProductSearch, productSearch]);
+
+  const handleProductSelect = useCallback((product: Product) => {
+    setSelectedProduct(product);
+    setFormData(prev => ({
+      ...prev,
+      product_id: product.id,
+      product_name: product.name,
+      unit_price: product.unit_price || 0,
+    }));
+    setShowProductSearch(false);
+  }, []);
 
   // 금액 포맷
   const formatCurrency = (value: number) => {
@@ -78,6 +112,8 @@ export function PurchaseOrderItems({ poId, items }: PurchaseOrderItemsProps) {
       quantity: 1,
       unit_price: 0,
     });
+    setSelectedProduct(null);
+    setProductSearch('');
   };
 
   const handleAdd = async () => {
@@ -240,7 +276,7 @@ export function PurchaseOrderItems({ poId, items }: PurchaseOrderItemsProps) {
       )}
 
       {/* Add Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+      <Dialog open={showAddDialog} onOpenChange={(open) => { setShowAddDialog(open); if (!open) resetForm(); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>품목 추가</DialogTitle>
@@ -248,30 +284,98 @@ export function PurchaseOrderItems({ poId, items }: PurchaseOrderItemsProps) {
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* 품목 검색 */}
             <div className="space-y-2">
-              <Label htmlFor="quantity">수량</Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                value={formData.quantity}
-                onChange={(e) =>
-                  setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })
-                }
-              />
+              <Label>품목 선택</Label>
+              <Dialog open={showProductSearch} onOpenChange={setShowProductSearch}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setShowProductSearch(true)}
+                >
+                  {selectedProduct ? (
+                    <span className="flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      {selectedProduct.name}
+                      {selectedProduct.sku && <span className="text-muted-foreground">({selectedProduct.sku})</span>}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <Search className="h-4 w-4" />
+                      품목 검색...
+                    </span>
+                  )}
+                </Button>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>품목 검색</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Input
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      placeholder="품목명, SKU로 검색"
+                      autoFocus
+                    />
+                    <div className="max-h-60 overflow-auto border rounded-md">
+                      {products.length > 0 ? (
+                        products.map((product) => (
+                          <button
+                            key={product.id}
+                            type="button"
+                            onClick={() => handleProductSelect(product)}
+                            className="w-full px-4 py-3 text-left hover:bg-accent transition-colors border-b last:border-b-0"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Package className="w-5 h-5 text-muted-foreground shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <div className="font-medium">{product.name}</div>
+                                <div className="text-sm text-muted-foreground flex gap-2">
+                                  {product.sku && <span>SKU: {product.sku}</span>}
+                                  {product.unit_price && <span>₩{product.unit_price.toLocaleString()}</span>}
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-6 text-center text-muted-foreground">
+                          {productSearch ? '검색 결과가 없습니다' : '등록된 품목이 없습니다'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="unit_price">단가 (원)</Label>
-              <Input
-                id="unit_price"
-                type="number"
-                min="0"
-                value={formData.unit_price}
-                onChange={(e) =>
-                  setFormData({ ...formData, unit_price: parseInt(e.target.value) || 0 })
-                }
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="quantity">수량</Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  min="1"
+                  value={formData.quantity}
+                  onChange={(e) =>
+                    setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="unit_price">단가 (원)</Label>
+                <Input
+                  id="unit_price"
+                  type="number"
+                  min="0"
+                  value={formData.unit_price}
+                  onChange={(e) =>
+                    setFormData({ ...formData, unit_price: parseInt(e.target.value) || 0 })
+                  }
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

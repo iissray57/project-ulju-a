@@ -18,14 +18,8 @@ import {
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
-  LEGACY_STATUS_MAP,
   type OrderStatus,
 } from '@/lib/schemas/order-status';
-
-// DB 상태를 새 상태로 매핑
-function mapStatus(status: string): OrderStatus {
-  return (LEGACY_STATUS_MAP[status] || status) as OrderStatus;
-}
 import { ExportButton } from '@/components/ui/export-button';
 import type { ExportColumn } from '@/lib/utils/export';
 import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
@@ -37,11 +31,11 @@ interface OrderListProps {
 
 const STATUS_FILTERS: { label: string; value: OrderStatus | 'all' }[] = [
   { label: '전체', value: 'all' },
-  { label: '의뢰', value: 'inquiry' },
-  { label: '실측', value: 'measurement' },
-  { label: '견적발송', value: 'quotation_sent' },
-  { label: '확정', value: 'confirmed' },
-  { label: '완료', value: 'completed' },
+  { label: '의뢰/실측', value: 'inquiry' },
+  { label: '견적', value: 'quotation' },
+  { label: '작업', value: 'work' },
+  { label: '정산대기', value: 'settlement_wait' },
+  { label: '매출확정', value: 'revenue_confirmed' },
   { label: '취소', value: 'cancelled' },
 ];
 
@@ -63,10 +57,10 @@ function formatDate(dateStr: string): string {
 const ORDER_EXPORT_COLUMNS: ExportColumn<OrderWithCustomer>[] = [
   { header: '주문번호', accessor: (r) => r.order_number },
   { header: '고객명', accessor: (r) => r.customer?.name },
-  { header: '유형', accessor: (r) => r.closet_type },
+  { header: '유형', accessor: (r) => r.work_type },
   { header: '견적액', accessor: (r) => r.quotation_amount },
   { header: '확정액', accessor: (r) => r.confirmed_amount },
-  { header: '상태', accessor: (r) => r.status ? ORDER_STATUS_LABELS[mapStatus(r.status)] : '' },
+  { header: '상태', accessor: (r) => r.status ? ORDER_STATUS_LABELS[r.status as OrderStatus] : '' },
   { header: '등록일', accessor: (r) => r.created_at ? formatDate(r.created_at) : '' },
 ];
 
@@ -170,14 +164,14 @@ export function OrderList({ orders, total }: OrderListProps) {
                     </div>
                   </div>
                   {order.status && (
-                    <Badge className={ORDER_STATUS_COLORS[mapStatus(order.status)]}>
-                      {ORDER_STATUS_LABELS[mapStatus(order.status)]}
+                    <Badge className={ORDER_STATUS_COLORS[order.status as OrderStatus]}>
+                      {ORDER_STATUS_LABELS[order.status as OrderStatus]}
                     </Badge>
                   )}
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
-                    {order.closet_type || '유형 미정'}
+                    {order.work_type || '유형 미정'}
                   </span>
                   {order.confirmed_amount ? (
                     <span className="font-semibold">
@@ -238,7 +232,7 @@ export function OrderList({ orders, total }: OrderListProps) {
                   <TableCell className="font-medium">{order.order_number}</TableCell>
                   <TableCell>{order.customer?.name || '고객 정보 없음'}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    {order.closet_type || '-'}
+                    {order.work_type || '-'}
                   </TableCell>
                   <TableCell className="text-right text-muted-foreground">
                     {order.quotation_amount ? formatCurrency(order.quotation_amount) : '-'}
@@ -248,8 +242,8 @@ export function OrderList({ orders, total }: OrderListProps) {
                   </TableCell>
                   <TableCell>
                     {order.status ? (
-                      <Badge className={ORDER_STATUS_COLORS[mapStatus(order.status)]}>
-                        {ORDER_STATUS_LABELS[mapStatus(order.status)]}
+                      <Badge className={ORDER_STATUS_COLORS[order.status as OrderStatus]}>
+                        {ORDER_STATUS_LABELS[order.status as OrderStatus]}
                       </Badge>
                     ) : (
                       '-'

@@ -7,7 +7,7 @@ import type { Database } from '@/lib/database.types';
 type OrderStatus = Database['public']['Enums']['order_status'];
 
 interface PageProps {
-  searchParams: Promise<{ status?: string; q?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; page?: string; year?: string; month?: string }>;
 }
 
 export default async function OrdersPage({ searchParams }: PageProps) {
@@ -17,7 +17,12 @@ export default async function OrdersPage({ searchParams }: PageProps) {
   const page = Number(params.page || '1');
   const limit = 200; // Kanban needs all orders; pagination handled in list view
 
-  const result = await getOrders({ status, search, page, limit });
+  // 월별 필터 (기본값: 현재 월)
+  const now = new Date();
+  const year = params.year ? Number(params.year) : now.getFullYear();
+  const month = params.month ? Number(params.month) : now.getMonth() + 1;
+
+  const result = await getOrders({ status, search, year, month, page, limit });
 
   if (result.error) {
     return (
@@ -39,7 +44,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
         <div>
           <h1 className="text-3xl font-bold">주문 관리</h1>
           <p className="text-muted-foreground mt-2">
-            총 {total}건의 주문이 등록되어 있습니다
+            {year}년 {month}월: 총 {total}건
           </p>
         </div>
         <Button asChild className="hidden md:flex">
@@ -47,7 +52,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
         </Button>
       </div>
 
-      <OrdersViewContainer orders={orders} total={total} />
+      <OrdersViewContainer orders={orders} total={total} year={year} month={month} />
     </div>
   );
 }

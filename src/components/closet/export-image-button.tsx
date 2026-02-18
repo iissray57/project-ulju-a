@@ -35,12 +35,13 @@ export function ExportImageButton() {
   return (
     <Button
       variant="ghost"
-      size="xs"
+      size="sm"
       onClick={handleExport}
       disabled={exporting}
       title="PNG 이미지 내보내기"
+      className="h-8"
     >
-      <Download className="size-3.5" />
+      <Download className="size-4" />
       <span className="hidden sm:inline text-xs">내보내기</span>
     </Button>
   );

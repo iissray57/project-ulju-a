@@ -33,7 +33,7 @@ export function NewOrderBottomSheet() {
   const [showDropdown, setShowDropdown] = useState(false);
 
   // 폼 상태
-  const [closetType, setClosetType] = useState<string>('');
+  const [workType, setWorkType] = useState<string>('');
   const [quotationAmount, setQuotationAmount] = useState('');
   const [measurementDate, setMeasurementDate] = useState('');
 
@@ -63,7 +63,7 @@ export function NewOrderBottomSheet() {
   const resetForm = () => {
     setCustomerSearch('');
     setSelectedCustomer(null);
-    setClosetType('');
+    setWorkType('');
     setQuotationAmount('');
     setMeasurementDate('');
   };
@@ -78,8 +78,8 @@ export function NewOrderBottomSheet() {
     try {
       const result = await createOrder({
         customer_id: selectedCustomer.id,
-        closet_type:
-          (closetType as 'angle' | 'system' | 'mixed' | undefined) || undefined,
+        work_type:
+          (workType as 'angle' | 'system' | 'mixed' | undefined) || undefined,
         quotation_amount: Number(quotationAmount) || 0,
         confirmed_amount: 0,
         measurement_date: measurementDate,
@@ -159,11 +159,11 @@ export function NewOrderBottomSheet() {
             )}
           </div>
 
-          {/* 옷장 유형 */}
+          {/* 작업 유형 */}
           <div className="space-y-2">
-            <Label>옷장 유형</Label>
-            <RadioGroup value={closetType} onValueChange={setClosetType}>
-              <div className="flex gap-4">
+            <Label>작업 유형</Label>
+            <RadioGroup value={workType} onValueChange={setWorkType}>
+              <div className="flex flex-wrap gap-4">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="angle" id="bs-angle" />
                   <Label htmlFor="bs-angle" className="font-normal">
@@ -180,6 +180,18 @@ export function NewOrderBottomSheet() {
                   <RadioGroupItem value="mixed" id="bs-mixed" />
                   <Label htmlFor="bs-mixed" className="font-normal">
                     혼합
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="curtain" id="bs-curtain" />
+                  <Label htmlFor="bs-curtain" className="font-normal">
+                    커튼
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="demolition" id="bs-demolition" />
+                  <Label htmlFor="bs-demolition" className="font-normal">
+                    철거
                   </Label>
                 </div>
               </div>

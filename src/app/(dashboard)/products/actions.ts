@@ -142,10 +142,11 @@ export async function createProduct(
       return { error: `입력값 검증 실패: ${parsed.error.message}` };
     }
 
-    const insertData: ProductInsert = {
+    // Note: ProductInsert 타입 outdated - supabase gen types 재실행 필요
+    const insertData = {
       ...parsed.data,
       user_id: user.id,
-    };
+    } as ProductInsert;
 
     const { data, error } = await supabase
       .from('products')
@@ -190,10 +191,10 @@ export async function updateProduct(
       return { error: `입력값 검증 실패: ${parsed.error.message}` };
     }
 
-    const updateData: ProductUpdate = {
+    const updateData = {
       ...parsed.data,
       updated_at: new Date().toISOString(),
-    };
+    } as ProductUpdate;
 
     const { data, error } = await supabase
       .from('products')

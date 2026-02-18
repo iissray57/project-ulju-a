@@ -354,3 +354,261 @@ export async function getReportDownloadUrl(
     return { error: '다운로드 URL 생성 중 오류가 발생했습니다.' };
   }
 }
+
+// ── Statistics Actions ────────────────────────────────────────────
+
+export interface MonthlyRevenue {
+  month: number;
+  revenue: number;
+}
+
+export interface OrderStatusCount {
+  status: string;
+  count: number;
+}
+
+export interface QuarterlyData {
+  quarter: string;
+  revenue: number;
+}
+
+export interface TopCustomer {
+  customer_id: string;
+  customer_name: string;
+  total_revenue: number;
+  order_count: number;
+}
+
+/**
+ * Get monthly revenue for a given year
+ */
+export async function getMonthlyRevenue(
+  year: number
+): Promise<ActionResult<MonthlyRevenue[]>> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: '인증이 필요합니다.' };
+    }
+
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('confirmed_amount, revenue_confirmed_at')
+      .eq('user_id', user.id)
+      .not('confirmed_amount', 'is', null)
+      .gte('revenue_confirmed_at', startDate)
+      .lte('revenue_confirmed_at', endDate);
+
+    if (error) {
+      console.error('[getMonthlyRevenue] Query error:', error);
+      return { error: error.message };
+    }
+
+    // Aggregate by month
+    const monthlyData: Record<number, number> = {};
+    for (let i = 1; i <= 12; i++) {
+      monthlyData[i] = 0;
+    }
+
+    data?.forEach((order) => {
+      if (order.revenue_confirmed_at && order.confirmed_amount) {
+        const month = new Date(order.revenue_confirmed_at).getMonth() + 1;
+        monthlyData[month] += order.confirmed_amount;
+      }
+    });
+
+    const result: MonthlyRevenue[] = Object.entries(monthlyData).map(
+      ([month, revenue]) => ({
+        month: Number(month),
+        revenue,
+      })
+    );
+
+    return { data: result };
+  } catch (err) {
+    console.error('[getMonthlyRevenue] Unexpected error:', err);
+    return { error: '월별 매출 조회 중 오류가 발생했습니다.' };
+  }
+}
+
+/**
+ * Get order status distribution
+ */
+export async function getOrderStatusDistribution(): Promise<
+  ActionResult<OrderStatusCount[]>
+> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: '인증이 필요합니다.' };
+    }
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('status')
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('[getOrderStatusDistribution] Query error:', error);
+      return { error: error.message };
+    }
+
+    // Count by status
+    const statusCounts: Record<string, number> = {};
+    data?.forEach((order) => {
+      const status = order.status || 'unknown';
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
+    });
+
+    const result: OrderStatusCount[] = Object.entries(statusCounts).map(
+      ([status, count]) => ({
+        status,
+        count,
+      })
+    );
+
+    return { data: result };
+  } catch (err) {
+    console.error('[getOrderStatusDistribution] Unexpected error:', err);
+    return { error: '상태별 분포 조회 중 오류가 발생했습니다.' };
+  }
+}
+
+/**
+ * Get quarterly comparison for a given year
+ */
+export async function getQuarterlyComparison(
+  year: number
+): Promise<ActionResult<QuarterlyData[]>> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: '인증이 필요합니다.' };
+    }
+
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('confirmed_amount, revenue_confirmed_at')
+      .eq('user_id', user.id)
+      .not('confirmed_amount', 'is', null)
+      .gte('revenue_confirmed_at', startDate)
+      .lte('revenue_confirmed_at', endDate);
+
+    if (error) {
+      console.error('[getQuarterlyComparison] Query error:', error);
+      return { error: error.message };
+    }
+
+    // Aggregate by quarter
+    const quarterlyData: Record<string, number> = {
+      'Q1': 0,
+      'Q2': 0,
+      'Q3': 0,
+      'Q4': 0,
+    };
+
+    data?.forEach((order) => {
+      if (order.revenue_confirmed_at && order.confirmed_amount) {
+        const month = new Date(order.revenue_confirmed_at).getMonth() + 1;
+        const quarter = Math.ceil(month / 3);
+        quarterlyData[`Q${quarter}`] += order.confirmed_amount;
+      }
+    });
+
+    const result: QuarterlyData[] = Object.entries(quarterlyData).map(
+      ([quarter, revenue]) => ({
+        quarter,
+        revenue,
+      })
+    );
+
+    return { data: result };
+  } catch (err) {
+    console.error('[getQuarterlyComparison] Unexpected error:', err);
+    return { error: '분기별 비교 조회 중 오류가 발생했습니다.' };
+  }
+}
+
+/**
+ * Get top customers by revenue
+ */
+export async function getTopCustomers(
+  limit: number = 10
+): Promise<ActionResult<TopCustomer[]>> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: '인증이 필요합니다.' };
+    }
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('customer_id, confirmed_amount, customers(name)')
+      .eq('user_id', user.id)
+      .not('confirmed_amount', 'is', null)
+      .not('customer_id', 'is', null);
+
+    if (error) {
+      console.error('[getTopCustomers] Query error:', error);
+      return { error: error.message };
+    }
+
+    // Aggregate by customer
+    const customerData: Record<
+      string,
+      { name: string; total: number; count: number }
+    > = {};
+
+    data?.forEach((order: any) => {
+      if (order.customer_id && order.confirmed_amount) {
+        if (!customerData[order.customer_id]) {
+          customerData[order.customer_id] = {
+            name: order.customers?.name || '알 수 없음',
+            total: 0,
+            count: 0,
+          };
+        }
+        customerData[order.customer_id].total += order.confirmed_amount;
+        customerData[order.customer_id].count += 1;
+      }
+    });
+
+    // Sort by total revenue and take top N
+    const result: TopCustomer[] = Object.entries(customerData)
+      .map(([customer_id, data]) => ({
+        customer_id,
+        customer_name: data.name,
+        total_revenue: data.total,
+        order_count: data.count,
+      }))
+      .sort((a, b) => b.total_revenue - a.total_revenue)
+      .slice(0, limit);
+
+    return { data: result };
+  } catch (err) {
+    console.error('[getTopCustomers] Unexpected error:', err);
+    return { error: '고객 순위 조회 중 오류가 발생했습니다.' };
+  }
+}

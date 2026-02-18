@@ -1,87 +1,127 @@
-// 간소화된 주문 상태 (6단계 + 취소)
-// 의뢰 → 실측 → 견적발송 → 확정(작업일+할인) → 작업완료(입금대기) → 매출확정
+// 주문 상태 (5단계 + 취소)
+// inquiry(의뢰/실측) → quotation(견적) → work(작업) → settlement_wait(정산대기) → revenue_confirmed(매출확정)
 export const ORDER_STATUS = [
-  'inquiry',           // 의뢰/등록
-  'measurement',       // 실측 완료
-  'quotation_sent',    // 견적 발송
-  'confirmed',         // 확정 (작업예정일 + 할인 적용)
-  'completed',         // 작업 완료 (입금 대기)
-  'revenue_confirmed', // 매출 확정 (입금 완료)
+  'inquiry',           // 의뢰/실측
+  'quotation',         // 견적
+  'work',              // 작업
+  'settlement_wait',   // 정산 대기
+  'revenue_confirmed', // 매출 확정
   'cancelled',         // 취소
 ] as const;
 
 export type OrderStatus = (typeof ORDER_STATUS)[number];
 
-// 상태 전이 규칙: key → 이동 가능한 상태 배열
-// 정방향 + 역방향(직전 상태로만) + 어디서든 cancelled
-export const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  inquiry: ['measurement', 'cancelled'],
-  measurement: ['quotation_sent', 'inquiry', 'cancelled'],
-  quotation_sent: ['confirmed', 'measurement', 'cancelled'],
-  confirmed: ['completed', 'quotation_sent', 'cancelled'],
-  completed: ['revenue_confirmed', 'confirmed', 'cancelled'],
-  revenue_confirmed: [], // 최종 상태, 전이 불가
-  cancelled: [], // 최종 상태, 전이 불가
+// 상태 전이 규칙 (정방향 + 역방향 + 취소)
+export const ORDER_TRANSITIONS: Record<OrderStatus, {
+  forward: OrderStatus[];
+  backward: OrderStatus[];
+  conditions?: string[];
+  sideEffects?: string[];
+}> = {
+  inquiry: {
+    forward: ['quotation', 'cancelled'],
+    backward: [],
+    conditions: ['견적 금액 입력 필수'],
+  },
+  quotation: {
+    forward: ['work', 'cancelled'],
+    backward: ['inquiry'],
+    conditions: ['확정 금액 입력 필수', '작업일 확정'],
+  },
+  work: {
+    forward: ['settlement_wait', 'cancelled'],
+    backward: ['quotation'],
+    conditions: ['작업 완료 확인'],
+  },
+  settlement_wait: {
+    forward: ['revenue_confirmed'],
+    backward: ['work'],
+    conditions: ['입금 확인'],
+  },
+  revenue_confirmed: {
+    forward: [],
+    backward: [],
+  },
+  cancelled: {
+    forward: [],
+    backward: [],
+    sideEffects: ['cancel_order_cascade RPC 호출'],
+  },
 };
 
 // 상태 전이 가능 여부 검증
 export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
-  return ORDER_TRANSITIONS[from].includes(to);
+  const transitions = ORDER_TRANSITIONS[from];
+  return transitions.forward.includes(to) || transitions.backward.includes(to);
 }
 
-// 상태 한글 라벨 (DB 레거시 값 포함)
-export const ORDER_STATUS_LABELS: Record<string, string> = {
-  inquiry: '의뢰',
-  measurement: '실측',
-  measurement_done: '실측',
-  quotation_sent: '견적 발송',
-  confirmed: '확정',
-  date_fixed: '확정',
-  material_held: '확정',
-  completed: '작업 완료',
-  installed: '작업 완료',
-  settlement_wait: '작업 완료',
+// 정방향 전이 가능 여부
+export function canTransitionForward(from: OrderStatus, to: OrderStatus): boolean {
+  return ORDER_TRANSITIONS[from].forward.includes(to);
+}
+
+// 역방향 전이 가능 여부
+export function canTransitionBackward(from: OrderStatus, to: OrderStatus): boolean {
+  return ORDER_TRANSITIONS[from].backward.includes(to);
+}
+
+// 상태 한글 라벨
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  inquiry: '의뢰/실측',
+  quotation: '견적',
+  work: '작업',
+  settlement_wait: '정산 대기',
   revenue_confirmed: '매출 확정',
   cancelled: '취소',
 };
 
-// 상태별 색상 (DB 레거시 값 포함)
-export const ORDER_STATUS_COLORS: Record<string, string> = {
+// 상태별 색상
+export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   inquiry: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
-  measurement: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
-  measurement_done: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
-  quotation_sent: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  confirmed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  date_fixed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  material_held: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  completed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-  installed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-  settlement_wait: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
+  quotation: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  work: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  settlement_wait: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
   revenue_confirmed: 'bg-stone-100 text-stone-800 dark:bg-stone-900/30 dark:text-stone-300',
   cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
 };
 
-// DB enum → 코드 상태 매핑 (읽기용)
-export const LEGACY_STATUS_MAP: Record<string, OrderStatus> = {
+// 기존 DB 상태 → 새 상태 매핑 (마이그레이션 전 호환성)
+const LEGACY_STATUS_MAP: Record<string, OrderStatus> = {
   inquiry: 'inquiry',
-  measurement_done: 'measurement',
-  quotation_sent: 'quotation_sent',
-  confirmed: 'confirmed',
-  date_fixed: 'confirmed',
-  material_held: 'confirmed',
-  installed: 'completed',
-  settlement_wait: 'completed',
+  measurement_done: 'inquiry',
+  quotation_sent: 'quotation',
+  confirmed: 'quotation',
+  date_fixed: 'work',
+  material_held: 'work',
+  installed: 'work',
+  settlement_wait: 'settlement_wait',
   revenue_confirmed: 'revenue_confirmed',
   cancelled: 'cancelled',
+  // 새 상태도 포함
+  quotation: 'quotation',
+  work: 'work',
 };
 
-// 코드 상태 → DB enum 매핑 (쓰기용)
-export const STATUS_TO_DB: Record<OrderStatus, string> = {
-  inquiry: 'inquiry',
-  measurement: 'measurement_done',
-  quotation_sent: 'quotation_sent',
-  confirmed: 'confirmed',
-  completed: 'installed',
-  revenue_confirmed: 'revenue_confirmed',
-  cancelled: 'cancelled',
-};
+/**
+ * DB에서 가져온 상태를 새 5단계 상태로 매핑
+ */
+export function mapDbStatus(dbStatus: string | null): OrderStatus {
+  if (!dbStatus) return 'inquiry';
+  return LEGACY_STATUS_MAP[dbStatus] || 'inquiry';
+}
+
+/**
+ * 상태 라벨 가져오기 (DB 상태 호환)
+ */
+export function getStatusLabel(status: string | null): string {
+  const mapped = mapDbStatus(status);
+  return ORDER_STATUS_LABELS[mapped];
+}
+
+/**
+ * 상태 색상 가져오기 (DB 상태 호환)
+ */
+export function getStatusColor(status: string | null): string {
+  const mapped = mapDbStatus(status);
+  return ORDER_STATUS_COLORS[mapped];
+}

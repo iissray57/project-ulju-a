@@ -123,7 +123,7 @@ export function OrderTimelineView({ orders }: OrderTimelineViewProps) {
 
                         {/* 유형 + 금액 */}
                         <div className="text-sm text-muted-foreground">
-                          {order.closet_type || '(미정)'} ·{' '}
+                          {order.work_type || '(미정)'} ·{' '}
                           {order.confirmed_amount !== null
                             ? formatCurrency(order.confirmed_amount)
                             : order.quotation_amount

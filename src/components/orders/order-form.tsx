@@ -88,7 +88,7 @@ export function OrderForm({ orderId, defaultValues }: OrderFormProps) {
         }
       : {
           customer_id: '',
-          closet_type: undefined,
+          work_type: undefined,
           quotation_amount: 0,
           confirmed_amount: 0,
           measurement_date: '',
@@ -99,7 +99,7 @@ export function OrderForm({ orderId, defaultValues }: OrderFormProps) {
         },
   });
 
-  const closetType = watch('closet_type');
+  const closetType = watch('work_type');
   const quotationAmount = watch('quotation_amount');
 
   // 할인율 적용 시 확정 금액 자동 계산
@@ -338,12 +338,13 @@ export function OrderForm({ orderId, defaultValues }: OrderFormProps) {
 
       {/* Product Specification Section */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">제품 사양</h2>
+        <h2 className="text-lg font-semibold">상품 사양</h2>
+
         <div className="space-y-2">
-          <Label>제품 유형</Label>
+          <Label>상품 유형</Label>
           <Select
-            value={closetType}
-            onValueChange={(value) => setValue('closet_type', value as 'angle' | 'system' | 'mixed')}
+            value={closetType || ''}
+            onValueChange={(value) => setValue('work_type', value as 'angle' | 'system' | 'mixed' | 'curtain' | 'demolition')}
           >
             <SelectTrigger className="w-full md:w-64">
               <SelectValue placeholder="유형을 선택하세요" />
@@ -352,11 +353,59 @@ export function OrderForm({ orderId, defaultValues }: OrderFormProps) {
               <SelectItem value="angle">앵글</SelectItem>
               <SelectItem value="system">시스템</SelectItem>
               <SelectItem value="mixed">혼합</SelectItem>
+              <SelectItem value="curtain">커튼</SelectItem>
+              <SelectItem value="demolition">철거</SelectItem>
             </SelectContent>
           </Select>
-          {errors.closet_type && (
-            <p className="text-sm text-destructive">{errors.closet_type.message}</p>
+          {errors.work_type && (
+            <p className="text-sm text-destructive">{errors.work_type.message}</p>
           )}
+        </div>
+
+        {/* 치수 입력 */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="spec_width">가로 (mm)</Label>
+            <Input
+              id="spec_width"
+              type="number"
+              placeholder="예: 2400"
+              value={watch('work_spec.width') || ''}
+              onChange={(e) => setValue('work_spec.width', e.target.value ? Number(e.target.value) : undefined)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="spec_height">높이 (mm)</Label>
+            <Input
+              id="spec_height"
+              type="number"
+              placeholder="예: 2400"
+              value={watch('work_spec.height') || ''}
+              onChange={(e) => setValue('work_spec.height', e.target.value ? Number(e.target.value) : undefined)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="spec_depth">깊이 (mm)</Label>
+            <Input
+              id="spec_depth"
+              type="number"
+              placeholder="예: 600"
+              value={watch('work_spec.depth') || ''}
+              onChange={(e) => setValue('work_spec.depth', e.target.value ? Number(e.target.value) : undefined)}
+            />
+          </div>
+        </div>
+
+        {/* 커스텀 사양 텍스트 */}
+        <div className="space-y-2">
+          <Label htmlFor="spec_custom">상세 사양 (자유 입력)</Label>
+          <Textarea
+            id="spec_custom"
+            placeholder="예: 선반 5단, 서랍 2개, 행거 1개 등 상세 사양을 입력하세요"
+            rows={3}
+            value={watch('work_spec.custom_text') || ''}
+            onChange={(e) => setValue('work_spec.custom_text', e.target.value || undefined)}
+          />
         </div>
       </div>
 

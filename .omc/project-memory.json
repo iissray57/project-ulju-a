@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1771153199732,
+  "lastScanned": 1771322674566,
   "projectRoot": "/Users/kimjihee/project/project-ulju-a",
   "techStack": {
     "languages": [
@@ -53,6 +53,7 @@
     "devCommand": "npm run dev",
     "scripts": {
       "dev": "next dev",
+      "dev:test": "next dev -p 3031",
       "build": "next build",
       "start": "next start",
       "lint": "next lint",
@@ -91,19 +92,23 @@
     "assets": {
       "path": "assets",
       "purpose": "Static assets",
-      "fileCount": 2,
-      "lastAccessed": 1771153199718,
+      "fileCount": 8,
+      "lastAccessed": 1771322674552,
       "keyFiles": [
-        "KakaoTalk_Photo_2026-02-14-22-38-01 001.jpeg",
-        "KakaoTalk_Photo_2026-02-14-22-38-01 002.jpeg"
+        "KakaoTalk_Photo_2026-02-14-22-38-01 002.jpeg",
+        "closet_loaction_sample.png",
+        "closet_location.png",
+        "closet_pic_1.jpeg",
+        "closet_sample.png"
       ]
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 1,
-      "lastAccessed": 1771153199718,
+      "fileCount": 2,
+      "lastAccessed": 1771322674555,
       "keyFiles": [
+        "editor.md",
         "product-catalog-analysis.md"
       ]
     },
@@ -111,7 +116,7 @@
       "path": "playwright-report",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1771153199722,
+      "lastAccessed": 1771322674555,
       "keyFiles": [
         "index.html"
       ]
@@ -120,7 +125,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 1,
-      "lastAccessed": 1771153199722,
+      "lastAccessed": 1771322674555,
       "keyFiles": [
         "sw.js"
       ]
@@ -129,7 +134,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 1,
-      "lastAccessed": 1771153199722,
+      "lastAccessed": 1771322674556,
       "keyFiles": [
         "middleware.ts"
       ]
@@ -138,7 +143,7 @@
       "path": "supabase",
       "purpose": null,
       "fileCount": 3,
-      "lastAccessed": 1771153199722,
+      "lastAccessed": 1771322674556,
       "keyFiles": [
         "config.toml",
         "seed.sql"
@@ -148,21 +153,21 @@
       "path": "test-results",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1771153199722,
+      "lastAccessed": 1771322674556,
       "keyFiles": []
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
       "fileCount": 0,
-      "lastAccessed": 1771153199722,
+      "lastAccessed": 1771322674556,
       "keyFiles": []
     },
     "assets/docs": {
       "path": "assets/docs",
       "purpose": "Documentation",
       "fileCount": 12,
-      "lastAccessed": 1771153199723,
+      "lastAccessed": 1771322674556,
       "keyFiles": [
         "2025년 매출현황.xlsx",
         "다온하우스304호.xlsx",
@@ -173,7 +178,7 @@
       "path": "src/app",
       "purpose": "Application code",
       "fileCount": 4,
-      "lastAccessed": 1771153199723,
+      "lastAccessed": 1771322674557,
       "keyFiles": [
         "globals.css",
         "layout.tsx",
@@ -184,14 +189,14 @@
       "path": "src/components",
       "purpose": "UI components",
       "fileCount": 0,
-      "lastAccessed": 1771153199723,
+      "lastAccessed": 1771322674557,
       "keyFiles": []
     },
     "src/lib": {
       "path": "src/lib",
       "purpose": "Library code",
       "fileCount": 2,
-      "lastAccessed": 1771153199723,
+      "lastAccessed": 1771322674557,
       "keyFiles": [
         "database.types.ts",
         "utils.ts"
@@ -200,8 +205,8 @@
     "supabase/migrations": {
       "path": "supabase/migrations",
       "purpose": "Database migrations",
-      "fileCount": 10,
-      "lastAccessed": 1771153199723,
+      "fileCount": 17,
+      "lastAccessed": 1771322674557,
       "keyFiles": [
         "20260214120000_initial_schema.sql",
         "20260214130000_rls_policies.sql",
@@ -209,6 +214,67 @@
       ]
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": "src/components/closet-v2/canvas/three-view.tsx",
+      "accessCount": 27,
+      "lastAccessed": 1771325761477,
+      "type": "file"
+    },
+    {
+      "path": "src/components/closet-v2/editor-context-v2.tsx",
+      "accessCount": 17,
+      "lastAccessed": 1771325606985,
+      "type": "file"
+    },
+    {
+      "path": "src/components/closet-v2/shapes/closet-unit-shape.tsx",
+      "accessCount": 13,
+      "lastAccessed": 1771326077371,
+      "type": "file"
+    },
+    {
+      "path": "src/components/closet-v2/palette/property-panel.tsx",
+      "accessCount": 10,
+      "lastAccessed": 1771325873397,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/types/closet-editor.ts",
+      "accessCount": 7,
+      "lastAccessed": 1771324805780,
+      "type": "file"
+    },
+    {
+      "path": "src/components/closet-v2/palette/preset-palette.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1771324940815,
+      "type": "file"
+    },
+    {
+      "path": "src/components/closet-v2/canvas/konva-canvas.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1771325074695,
+      "type": "file"
+    },
+    {
+      "path": "src/components/closet-v2/closet-editor-v2.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1771325105796,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/data/system-presets.ts",
+      "accessCount": 3,
+      "lastAccessed": 1771324862089,
+      "type": "file"
+    },
+    {
+      "path": "src/components/closet-v2/canvas/plan-view-layer.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1771325674167,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }

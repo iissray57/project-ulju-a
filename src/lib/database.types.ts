@@ -506,6 +506,59 @@ export type Database = {
           },
         ]
       }
+      portfolios: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          images: string[]
+          is_featured: boolean
+          is_visible: boolean
+          order_id: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          images?: string[]
+          is_featured?: boolean
+          is_visible?: boolean
+          order_id?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          images?: string[]
+          is_featured?: boolean
+          is_visible?: boolean
+          order_id?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolios_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: Database["public"]["Enums"]["product_category"]
@@ -675,6 +728,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      quote_requests: {
+        Row: {
+          address: string | null
+          admin_notes: string | null
+          category: string
+          completed_at: string | null
+          contacted_at: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          description: string | null
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          admin_notes?: string | null
+          category: string
+          completed_at?: string | null
+          contacted_at?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          description?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          admin_notes?: string | null
+          category?: string
+          completed_at?: string | null
+          contacted_at?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          description?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       report_templates: {
         Row: {
@@ -880,26 +981,26 @@ export type Database = {
     Enums: {
       order_status:
         | "inquiry"
-        | "quotation_sent"
-        | "confirmed"
-        | "measurement_done"
-        | "date_fixed"
-        | "material_held"
-        | "installed"
+        | "quotation"
+        | "work"
         | "settlement_wait"
         | "revenue_confirmed"
         | "cancelled"
       po_status: "draft" | "ordered" | "received" | "settled" | "cost_confirmed"
       product_category:
-        | "angle"
-        | "plywood"
-        | "raw_sheet"
+        | "angle_frame"
         | "system_frame"
-        | "top_panel"
+        | "shelf"
+        | "hanger_bar"
         | "drawer"
-        | "mirror_cabinet"
-        | "blind"
-        | "curtain"
+        | "door"
+        | "hardware"
+        | "accessory"
+        | "etc"
+        | "top_panel"
+        | "mirror"
+        | "lighting"
+        | "tray"
       schedule_type:
         | "measurement"
         | "installation"
@@ -1044,27 +1145,27 @@ export const Constants = {
     Enums: {
       order_status: [
         "inquiry",
-        "quotation_sent",
-        "confirmed",
-        "measurement_done",
-        "date_fixed",
-        "material_held",
-        "installed",
+        "quotation",
+        "work",
         "settlement_wait",
         "revenue_confirmed",
         "cancelled",
       ],
       po_status: ["draft", "ordered", "received", "settled", "cost_confirmed"],
       product_category: [
-        "angle",
-        "plywood",
-        "raw_sheet",
+        "angle_frame",
         "system_frame",
-        "top_panel",
+        "shelf",
+        "hanger_bar",
         "drawer",
-        "mirror_cabinet",
-        "blind",
-        "curtain",
+        "door",
+        "hardware",
+        "accessory",
+        "etc",
+        "top_panel",
+        "mirror",
+        "lighting",
+        "tray",
       ],
       schedule_type: [
         "measurement",

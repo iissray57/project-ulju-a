@@ -17,13 +17,12 @@ import {
 import { transitionOrderStatus } from '@/app/(dashboard)/orders/actions';
 import type { OrderWithCustomer } from '@/app/(dashboard)/orders/actions';
 
-/** Main pipeline statuses shown as columns */
+/** Main pipeline statuses shown as columns (5단계) */
 const PIPELINE_STATUSES: OrderStatus[] = [
   'inquiry',
-  'measurement',
-  'quotation_sent',
-  'confirmed',
-  'completed',
+  'quotation',
+  'work',
+  'settlement_wait',
 ];
 
 /** Terminal/archive statuses shown collapsed */
@@ -35,10 +34,9 @@ const ARCHIVE_STATUSES: OrderStatus[] = [
 // Color mapping for column header dots
 const STATUS_DOT_COLORS: Record<OrderStatus, string> = {
   inquiry: 'bg-purple-500',
-  measurement: 'bg-teal-500',
-  quotation_sent: 'bg-blue-500',
-  confirmed: 'bg-green-500',
-  completed: 'bg-emerald-500',
+  quotation: 'bg-blue-500',
+  work: 'bg-green-500',
+  settlement_wait: 'bg-amber-500',
   revenue_confirmed: 'bg-stone-500',
   cancelled: 'bg-red-500',
 };

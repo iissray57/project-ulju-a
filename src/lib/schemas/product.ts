@@ -82,6 +82,7 @@ export const productFormSchema = z.object({
   color: z.string().nullish(),                    // 색상
   memo: z.string().nullish(),
   is_active: z.boolean().nullish(),
+  supplier_id: z.string().uuid().nullish(),       // 기본 거래처 (선택)
 });
 
 export type ProductFormData = z.infer<typeof productFormSchema>;

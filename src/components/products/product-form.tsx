@@ -14,6 +14,7 @@ import {
   type ProductMainCategory,
 } from '@/lib/schemas/product';
 import { createProduct, updateProduct } from '@/app/(dashboard)/products/actions';
+import { getSuppliers } from '@/app/(dashboard)/suppliers/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,8 +26,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { Search, Building2, X } from 'lucide-react';
+
+interface Supplier {
+  id: string;
+  name: string;
+  phone: string | null;
+}
 
 interface ProductFormProps {
   productId?: string;
@@ -38,6 +52,12 @@ interface ProductFormProps {
 export function ProductForm({ productId, defaultValues, onSuccess, onCancel }: ProductFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 거래처 관련 상태
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [supplierSearch, setSupplierSearch] = useState('');
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
 
   const {
     register,
@@ -64,6 +84,34 @@ export function ProductForm({ productId, defaultValues, onSuccess, onCancel }: P
   });
 
   const selectedCategory = watch('category');
+
+  // 거래처 검색
+  useEffect(() => {
+    if (isSupplierDialogOpen) {
+      const loadSuppliers = async () => {
+        const result = await getSuppliers({ query: supplierSearch.trim(), limit: 20 });
+        if (result.data) {
+          setSuppliers(result.data);
+        }
+      };
+      const timer = setTimeout(loadSuppliers, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isSupplierDialogOpen, supplierSearch]);
+
+  const handleSupplierSelect = useCallback(
+    (supplier: Supplier) => {
+      setSelectedSupplier(supplier);
+      setValue('supplier_id', supplier.id);
+      setIsSupplierDialogOpen(false);
+    },
+    [setValue]
+  );
+
+  const clearSupplier = () => {
+    setSelectedSupplier(null);
+    setValue('supplier_id', undefined);
+  };
 
   const onSubmit = async (data: ProductFormData) => {
     setIsSubmitting(true);
@@ -236,6 +284,78 @@ export function ProductForm({ productId, defaultValues, onSuccess, onCancel }: P
           </SelectContent>
         </Select>
       </div>
+
+      {/* 기본 거래처 (선택) */}
+      <div className="space-y-2">
+        <Label>기본 거래처 <span className="text-xs text-muted-foreground">(선택)</span></Label>
+        <div className="flex items-center gap-2">
+          {selectedSupplier ? (
+            <div className="flex items-center gap-2 flex-1 px-3 py-2 border rounded-md bg-muted/50">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span className="flex-1">{selectedSupplier.name}</span>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={clearSupplier}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 justify-start"
+              onClick={() => setIsSupplierDialogOpen(true)}
+            >
+              <Search className="h-4 w-4 mr-2" />
+              거래처 검색...
+            </Button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          발주 시 기본으로 선택될 거래처입니다
+        </p>
+      </div>
+
+      {/* 거래처 검색 다이얼로그 */}
+      <Dialog open={isSupplierDialogOpen} onOpenChange={setIsSupplierDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>거래처 검색</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              value={supplierSearch}
+              onChange={(e) => setSupplierSearch(e.target.value)}
+              placeholder="거래처명 또는 연락처로 검색"
+              autoFocus
+            />
+            <div className="max-h-60 overflow-auto border rounded-md">
+              {suppliers.length > 0 ? (
+                suppliers.map((supplier) => (
+                  <button
+                    key={supplier.id}
+                    type="button"
+                    onClick={() => handleSupplierSelect(supplier)}
+                    className="w-full px-4 py-3 text-left hover:bg-accent transition-colors border-b last:border-b-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Building2 className="w-5 h-5 text-muted-foreground shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium">{supplier.name}</div>
+                        {supplier.phone && (
+                          <div className="text-sm text-muted-foreground">{supplier.phone}</div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="px-4 py-6 text-center text-muted-foreground">
+                  {supplierSearch ? '검색 결과가 없습니다' : '등록된 거래처가 없습니다'}
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* 메모 */}
       <div className="space-y-2">

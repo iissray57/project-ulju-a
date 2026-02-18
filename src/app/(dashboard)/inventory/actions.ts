@@ -165,10 +165,11 @@ export async function createProduct(
       return { error: `입력값 검증 실패: ${parsed.error.message}` };
     }
 
-    const insertData: ProductInsert = {
+    // Note: ProductInsert 타입이 outdated - supabase gen types 재실행 필요
+    const insertData = {
       ...parsed.data,
       user_id: user.id,
-    };
+    } as ProductInsert;
 
     const { data, error } = await supabase
       .from('products')
@@ -212,10 +213,10 @@ export async function updateProduct(
       return { error: `입력값 검증 실패: ${parsed.error.message}` };
     }
 
-    const updateData: ProductUpdate = {
+    const updateData = {
       ...parsed.data,
       updated_at: new Date().toISOString(),
-    };
+    } as ProductUpdate;
 
     const { data, error } = await supabase
       .from('products')
@@ -667,6 +668,121 @@ export async function getLowStockItems(): Promise<
   } catch (err) {
     return {
       error: `부족 재고 조회 중 오류 발생: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+// ===== INVENTORY-ORDER INTEGRATION ACTIONS =====
+
+/**
+ * 재고 Hold (수주 확정 시)
+ * RPC: hold_materials_for_order 호출
+ */
+export async function holdInventory(
+  orderId: string,
+  mode: 'partial' | 'strict' = 'partial'
+): Promise<ActionResult<{ has_shortage: boolean; details: unknown[] }>> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: '인증이 필요합니다' };
+    }
+
+    const { data, error } = await supabase.rpc('hold_materials_for_order', {
+      p_order_id: orderId,
+      p_mode: mode,
+    });
+
+    if (error) {
+      return { error: `재고 hold 실패: ${error.message}` };
+    }
+
+    revalidatePath('/orders');
+    revalidatePath(`/orders/${orderId}`);
+    revalidatePath('/inventory');
+
+    return { data };
+  } catch (err) {
+    return {
+      error: `재고 hold 중 오류 발생: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+/**
+ * 재고 불출 (시공 시작 시)
+ * RPC: dispatch_materials_for_order 호출
+ */
+export async function dispatchInventory(
+  orderId: string
+): Promise<ActionResult<{ success: boolean }>> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: '인증이 필요합니다' };
+    }
+
+    const { data, error } = await supabase.rpc('dispatch_materials_for_order', {
+      p_order_id: orderId,
+    });
+
+    if (error) {
+      return { error: `재고 불출 실패: ${error.message}` };
+    }
+
+    revalidatePath('/orders');
+    revalidatePath(`/orders/${orderId}`);
+    revalidatePath('/inventory');
+
+    return { data };
+  } catch (err) {
+    return {
+      error: `재고 불출 중 오류 발생: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+/**
+ * 재고 Hold 해제 (취소/변경 시)
+ * RPC: release_held_materials 호출
+ */
+export async function releaseInventory(
+  orderId: string
+): Promise<ActionResult<{ success: boolean }>> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: '인증이 필요합니다' };
+    }
+
+    const { data, error } = await supabase.rpc('release_held_materials', {
+      p_order_id: orderId,
+    });
+
+    if (error) {
+      return { error: `재고 해제 실패: ${error.message}` };
+    }
+
+    revalidatePath('/orders');
+    revalidatePath(`/orders/${orderId}`);
+    revalidatePath('/inventory');
+
+    return { data };
+  } catch (err) {
+    return {
+      error: `재고 해제 중 오류 발생: ${err instanceof Error ? err.message : String(err)}`,
     };
   }
 }

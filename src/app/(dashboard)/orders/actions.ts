@@ -3,30 +3,40 @@
 import { createClient } from '@/lib/supabase/server';
 import type { Database, TablesInsert, TablesUpdate } from '@/lib/database.types';
 import { orderFormSchema, type OrderFormData } from '@/lib/schemas/order';
-import { canTransition, LEGACY_STATUS_MAP, STATUS_TO_DB, type OrderStatus as NewOrderStatus } from '@/lib/schemas/order-status';
+import {
+  canTransition,
+  canTransitionBackward,
+  type OrderStatus as SchemaOrderStatus
+} from '@/lib/schemas/order-status';
 import { syncOrderSchedule, syncOrderDateChange } from '@/lib/utils/order-schedule-sync';
 import { revalidatePath } from 'next/cache';
 
 type OrderRow = Database['public']['Tables']['orders']['Row'];
 type OrderInsert = TablesInsert<'orders'>;
 type OrderUpdate = TablesUpdate<'orders'>;
-type OrderStatus = Database['public']['Enums']['order_status'];
+type DbOrderStatus = Database['public']['Enums']['order_status'];
 
 // 목록 조회 파라미터
 export interface GetOrdersParams {
-  status?: OrderStatus;
+  status?: DbOrderStatus;
   search?: string; // order_number 또는 customer name 검색
+  year?: number; // 연도 필터
+  month?: number; // 월 필터 (1-12)
   page?: number;
   limit?: number;
 }
 
 // 목록 조회 결과 (customer 정보 포함)
+// Note: DB 타입 outdated - work_type, work_spec 필드 수동 추가
 export interface OrderWithCustomer extends OrderRow {
   customer: {
     id: string;
     name: string;
     phone: string;
   } | null;
+  // DB에 있지만 타입에 없는 필드들 (supabase gen types 재실행 필요)
+  work_type?: string | null;
+  work_spec?: Record<string, unknown> | null;
 }
 
 // 공통 결과 타입
@@ -52,7 +62,7 @@ export async function getOrders(
       return { error: '인증이 필요합니다.' };
     }
 
-    const { status, search, page = 1, limit = 20 } = params;
+    const { status, search, year, month, page = 1, limit = 20 } = params;
     const offset = (page - 1) * limit;
 
     // 쿼리 빌드
@@ -67,18 +77,16 @@ export async function getOrders(
       )
       .eq('user_id', user.id);
 
-    // 상태 필터 (UI 상태를 DB enum으로 매핑)
+    // 월별 필터 (created_at 기준)
+    if (year && month) {
+      const startDate = new Date(year, month - 1, 1).toISOString();
+      const endDate = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
+      query = query.gte('created_at', startDate).lte('created_at', endDate);
+    }
+
+    // 상태 필터
     if (status) {
-      const dbStatus = STATUS_TO_DB[status as NewOrderStatus] || status;
-      // 여러 DB enum이 같은 UI 상태로 매핑되는 경우 처리
-      const reverseMatches = Object.entries(LEGACY_STATUS_MAP)
-        .filter(([, v]) => v === (status as NewOrderStatus))
-        .map(([k]) => k);
-      if (reverseMatches.length > 1) {
-        query = query.in('status', reverseMatches);
-      } else {
-        query = query.eq('status', dbStatus);
-      }
+      query = query.eq('status', status);
     }
 
     // 검색: order_number 또는 customer name
@@ -179,13 +187,18 @@ export async function createOrder(
       return { error: '주문번호 생성에 실패했습니다.' };
     }
 
-    // INSERT
-    const insertData: OrderInsert = {
+    // customer_id 검증 (빈 문자열 방지)
+    if (!parsed.data.customer_id || parsed.data.customer_id.trim() === '') {
+      return { error: '고객 정보가 필요합니다.' };
+    }
+
+    // INSERT (Note: DB 타입 outdated - supabase gen types 재실행 필요)
+    const insertData = {
       user_id: user.id,
       order_number: orderNumber,
       customer_id: parsed.data.customer_id,
-      closet_type: parsed.data.closet_type ?? null,
-      closet_spec: parsed.data.closet_spec ?? null,
+      work_type: parsed.data.work_type ?? null,
+      work_spec: parsed.data.work_spec ?? null,
       quotation_amount: parsed.data.quotation_amount,
       confirmed_amount: parsed.data.confirmed_amount,
       measurement_date: parsed.data.measurement_date || null,
@@ -194,7 +207,7 @@ export async function createOrder(
       site_memo: parsed.data.site_memo ?? null,
       memo: parsed.data.memo ?? null,
       status: 'inquiry', // 초기 상태
-    };
+    } as OrderInsert;
 
     const { data, error } = await supabase
       .from('orders')
@@ -241,8 +254,8 @@ export async function updateOrder(
     // UPDATE
     const updateData: OrderUpdate = {
       ...(parsed.data.customer_id && { customer_id: parsed.data.customer_id }),
-      ...(parsed.data.closet_type && { closet_type: parsed.data.closet_type }),
-      ...(parsed.data.closet_spec && { closet_spec: parsed.data.closet_spec }),
+      ...(parsed.data.work_type && { work_type: parsed.data.work_type }),
+      ...(parsed.data.work_spec && { work_spec: parsed.data.work_spec }),
       ...(parsed.data.quotation_amount !== undefined && {
         quotation_amount: parsed.data.quotation_amount,
       }),
@@ -359,14 +372,12 @@ export async function deleteOrder(id: string): Promise<ActionResult<void>> {
 /**
  * 주문 상태 전이
  * - ORDER_TRANSITIONS 규칙에 따라 전이 가능 여부 검증
- * - cancelled로 전이: cancel_order_cascade RPC 호출
- * - material_held로 전이: hold_materials_for_order RPC 호출
- * - installed로 전이: dispatch_materials_for_order RPC 호출
- * - 일반 전이: 직접 status UPDATE
+ * - 정방향/역방향 전이 지원
+ * - 상태별 부작용(RPC 호출) 처리
  */
 export async function transitionOrderStatus(
   orderId: string,
-  newStatus: NewOrderStatus
+  newStatus: SchemaOrderStatus
 ): Promise<ActionResult<OrderRow>> {
   try {
     const supabase = await createClient();
@@ -391,8 +402,7 @@ export async function transitionOrderStatus(
       return { error: '주문을 찾을 수 없습니다.' };
     }
 
-    // DB 상태를 새 상태로 매핑
-    const currentStatus = (LEGACY_STATUS_MAP[order.status] || order.status) as NewOrderStatus;
+    const currentStatus = order.status as SchemaOrderStatus;
 
     // 전이 가능 여부 검증
     if (!canTransition(currentStatus, newStatus)) {
@@ -401,9 +411,15 @@ export async function transitionOrderStatus(
       };
     }
 
-    // 상태별 처리
+    const isBackward = canTransitionBackward(currentStatus, newStatus);
+
+    // 취소 처리
     if (newStatus === 'cancelled') {
-      // cancel_order_cascade RPC 호출
+      // 작업 완료 이후는 취소 불가
+      if (['settlement_wait', 'revenue_confirmed'].includes(currentStatus)) {
+        return { error: '정산 대기 이후에는 취소할 수 없습니다.' };
+      }
+
       const { error: rpcError } = await supabase.rpc('cancel_order_cascade', {
         p_order_id: orderId,
       });
@@ -412,64 +428,13 @@ export async function transitionOrderStatus(
         console.error('[transitionOrderStatus] cancel_order_cascade error:', rpcError);
         return { error: '주문 취소 처리 중 오류가 발생했습니다.' };
       }
-    } else if (newStatus === 'confirmed') {
-      // 확정 시 자재 홀드 처리
-      const { error: rpcError } = await supabase.rpc('hold_materials_for_order', {
-        p_order_id: orderId,
-      });
-
-      if (rpcError) {
-        console.error('[transitionOrderStatus] hold_materials_for_order error:', rpcError);
-        // 자재 홀드 실패해도 상태는 변경 (자재가 없을 수 있음)
-        console.warn('자재 홀드에 실패했으나 상태는 변경됩니다.');
-      }
-
-      // 상태 업데이트
+    }
+    // 일반 전이
+    else {
       const { error: updateError } = await supabase
         .from('orders')
         .update({
-          status: STATUS_TO_DB[newStatus] as any,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId)
-        .eq('user_id', user.id);
-
-      if (updateError) {
-        console.error('[transitionOrderStatus] Update error:', updateError);
-        return { error: updateError.message };
-      }
-    } else if (newStatus === 'completed') {
-      // 작업 완료 시 자재 출고 처리
-      const { error: rpcError } = await supabase.rpc('dispatch_materials_for_order', {
-        p_order_id: orderId,
-      });
-
-      if (rpcError) {
-        console.error('[transitionOrderStatus] dispatch_materials_for_order error:', rpcError);
-        // 자재 출고 실패해도 상태는 변경 (경고만 표시)
-        console.warn('자재 출고에 실패했으나 상태는 변경됩니다.');
-      }
-
-      // 상태 업데이트
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({
-          status: STATUS_TO_DB[newStatus] as any,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId)
-        .eq('user_id', user.id);
-
-      if (updateError) {
-        console.error('[transitionOrderStatus] Update error:', updateError);
-        return { error: updateError.message };
-      }
-    } else {
-      // 일반 전이: 직접 status UPDATE
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({
-          status: STATUS_TO_DB[newStatus] as any,
+          status: newStatus,
           updated_at: new Date().toISOString(),
         })
         .eq('id', orderId)

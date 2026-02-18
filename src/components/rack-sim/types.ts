@@ -27,6 +27,7 @@ export interface RackItem {
   baseType: 'leveling_foot' | 'small_wheel' | 'large_wheel';
   color: string;
   rotation: number; // degrees (0, 90, 180, 270)
+  position: { x: number; z: number }; // XZ position in Three.js world units
 }
 
 /** Frame colors available */

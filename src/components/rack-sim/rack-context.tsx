@@ -53,6 +53,7 @@ type RackAction =
   | { type: 'SELECT_ITEM'; payload: string | null }
   | { type: 'UPDATE_ITEM'; payload: { id: string; updates: Partial<RackItem> } }
   | { type: 'UPDATE_ITEM_SIZE'; payload: { id: string; width?: number; depth?: number; height?: number } }
+  | { type: 'UPDATE_POSITION'; payload: { id: string; x: number; z: number } }
   | { type: 'TOGGLE_OPTION'; payload: { id: string; option: RackOptionType } }
   | { type: 'SET_SHELF_COUNT'; payload: { id: string; count: number } }
   | { type: 'SET_BASE_TYPE'; payload: { id: string; baseType: RackItem['baseType'] } }
@@ -131,6 +132,15 @@ function rackReducer(state: RackSimState, action: RackAction): RackSimState {
           ...(action.payload.height !== undefined && { height: action.payload.height }),
         };
       });
+      return { ...state, ...pushHistory(state, newItems) };
+    }
+
+    case 'UPDATE_POSITION': {
+      const newItems = state.items.map((item) =>
+        item.id === action.payload.id
+          ? { ...item, position: { x: action.payload.x, z: action.payload.z } }
+          : item,
+      );
       return { ...state, ...pushHistory(state, newItems) };
     }
 
@@ -259,8 +269,23 @@ export function RackSimProvider({ children, orderId = null, modelId = null }: Ra
 
   const addRack = useCallback(
     (productType: RackProductType) => {
+      const MM = 0.001;
+      const RACK_GAP = 200 * MM; // 200mm gap
       const sizeConfig = RACK_SIZE_CONFIGS[productType];
       const product = RACK_PRODUCTS[productType];
+
+      // Compute initial X position: place to the right of all existing racks, centered
+      const existingItems = state.items;
+      const totalWidth =
+        existingItems.reduce((sum, item) => sum + item.width * MM, 0) +
+        RACK_GAP * existingItems.length;
+      const newItemWidth = sizeConfig.defaultWidth * MM;
+      // Center of scene: subtract half total span including new item
+      const totalSpan = totalWidth + newItemWidth;
+      // Existing items were arranged from -totalSpan/2 to +totalSpan/2 (approx)
+      // New item goes at the right end of existing items
+      const newX = totalWidth - totalSpan / 2 + newItemWidth / 2;
+
       const newItem: RackItem = {
         id: `rack-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         productType,
@@ -273,10 +298,11 @@ export function RackSimProvider({ children, orderId = null, modelId = null }: Ra
         baseType: 'leveling_foot',
         color: RACK_FRAME_COLORS.silver.hex,
         rotation: 0,
+        position: { x: newX, z: 0 },
       };
       dispatch({ type: 'ADD_ITEM', payload: newItem });
     },
-    [state.items.length],
+    [state.items],
   );
 
   const selectedItem = useMemo(

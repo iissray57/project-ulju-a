@@ -1,17 +1,14 @@
 'use client';
 
-import { Suspense, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Suspense, useRef, useCallback } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Environment } from '@react-three/drei';
+import { Mesh, Group, Vector3 } from 'three';
+import type { ThreeEvent } from '@react-three/fiber';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useRackSim } from '../rack-context';
 import { RackMesh } from './rack-mesh';
 import { BackgroundScene } from './background-scene';
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-const MM = 0.001;
-const RACK_GAP = 200 * MM;   // 200mm gap between racks in Three.js units
 
 // ---------------------------------------------------------------------------
 // Scene content (rendered inside Canvas)
@@ -20,29 +17,109 @@ function SceneContent() {
   const { state, dispatch } = useRackSim();
   const { items, selectedItemId, cameraMode, background } = state;
 
-  // Layout: racks side by side along X axis, centered at origin
-  const rackPositions = useMemo(() => {
-    if (items.length === 0) return [];
+  // Orbit controls ref so we can disable during drag
+  const orbitRef = useRef<OrbitControlsImpl>(null);
 
-    // Compute total width occupied by all racks + gaps
-    const totalWidth = items.reduce((sum, item) => sum + item.width * MM, 0)
-      + RACK_GAP * (items.length - 1);
+  // Invisible floor plane ref for raycasting
+  const floorRef = useRef<Mesh>(null);
 
-    let cursor = -totalWidth / 2;
-    return items.map((item) => {
-      const pos = cursor + (item.width * MM) / 2;
-      cursor += item.width * MM + RACK_GAP;
-      return pos;
-    });
-  }, [items]);
+  // Drag state (refs for zero-rerender during drag)
+  const dragRef = useRef<{ itemId: string; offsetX: number; offsetZ: number } | null>(null);
+
+  // Per-rack group refs for live position update during drag
+  const groupRefs = useRef<Map<string, React.RefObject<Group | null>>>(new Map());
+
+  // Ensure we have a ref for every item
+  items.forEach((item) => {
+    if (!groupRefs.current.has(item.id)) {
+      groupRefs.current.set(item.id, { current: null });
+    }
+  });
+  // Clean up stale refs
+  const currentIds = new Set(items.map((i) => i.id));
+  groupRefs.current.forEach((_, id) => {
+    if (!currentIds.has(id)) groupRefs.current.delete(id);
+  });
+
+  const handleDragStart = useCallback(
+    (itemId: string) => (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation();
+
+      const item = items.find((i) => i.id === itemId);
+      if (!item) return;
+
+      // Raycast against the floor to get world point
+      const intersections = e.intersections;
+      // Find floor intersection (or fall back to e.point)
+      let floorPoint: Vector3 = e.point.clone();
+      if (floorRef.current) {
+        const floorHit = intersections.find((hit) => hit.object === floorRef.current);
+        if (floorHit) floorPoint = floorHit.point.clone();
+      }
+
+      dragRef.current = {
+        itemId,
+        offsetX: floorPoint.x - item.position.x,
+        offsetZ: floorPoint.z - item.position.z,
+      };
+
+      // Disable orbit so camera doesn't move during drag
+      if (orbitRef.current) orbitRef.current.enabled = false;
+    },
+    [items],
+  );
+
+  const handleFloorPointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
+    if (!dragRef.current) return;
+    e.stopPropagation();
+
+    const point = e.point;
+    const newX = point.x - dragRef.current.offsetX;
+    const newZ = point.z - dragRef.current.offsetZ;
+
+    // Update Three.js group position directly (no state dispatch = no rerender)
+    const ref = groupRefs.current.get(dragRef.current.itemId);
+    if (ref?.current) {
+      // The group has an internal cx/cz offset baked in via position prop on the inner group.
+      // The outer wrapper group (from rack-scene) controls world XZ position.
+      ref.current.position.x = newX;
+      ref.current.position.z = newZ;
+    }
+  }, []);
+
+  const handleFloorPointerUp = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      if (!dragRef.current) return;
+
+      const point = e.point;
+      const newX = point.x - dragRef.current.offsetX;
+      const newZ = point.z - dragRef.current.offsetZ;
+
+      dispatch({
+        type: 'UPDATE_POSITION',
+        payload: { id: dragRef.current.itemId, x: newX, z: newZ },
+      });
+
+      dragRef.current = null;
+
+      // Re-enable orbit
+      if (orbitRef.current) orbitRef.current.enabled = true;
+    },
+    [dispatch],
+  );
+
+  // Also handle pointer-up on canvas level in case mouse leaves floor
+  const handleMissedPointerUp = useCallback(() => {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    if (orbitRef.current) orbitRef.current.enabled = true;
+  }, []);
 
   return (
     <>
       {/* ---- Lighting ---- */}
-      {/* Soft ambient – brighter for dark background contrast */}
       <ambientLight intensity={0.75} color="#FFFFFF" />
 
-      {/* Key light – upper front left */}
       <directionalLight
         position={[-3, 5, 4]}
         intensity={1.8}
@@ -58,14 +135,12 @@ function SceneContent() {
         color="#FFF8F0"
       />
 
-      {/* Fill light – upper back right */}
       <directionalLight
         position={[3, 3, -3]}
         intensity={0.9}
         color="#E8F0FF"
       />
 
-      {/* Rim light – from below-back for metal sheen */}
       <pointLight position={[0, -0.5, -2]} intensity={0.5} color="#FFFFFF" />
 
       {/* ---- Environment (HDRI-like reflections on metal) ---- */}
@@ -74,21 +149,42 @@ function SceneContent() {
       {/* ---- Background ---- */}
       <BackgroundScene background={background} rackCount={items.length} />
 
+      {/* ---- Invisible floor plane for drag raycasting ---- */}
+      <mesh
+        ref={floorRef}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0.001, 0]}
+        onPointerMove={handleFloorPointerMove}
+        onPointerUp={handleFloorPointerUp}
+        onPointerLeave={handleMissedPointerUp}
+      >
+        <planeGeometry args={[40, 40]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+
       {/* ---- Racks ---- */}
-      {items.map((item, index) => (
-        <group key={item.id} position={[rackPositions[index], 0, 0]}>
-          <RackMesh
-            item={item}
-            isSelected={item.id === selectedItemId}
-            onClick={() =>
-              dispatch({
-                type: 'SELECT_ITEM',
-                payload: item.id === selectedItemId ? null : item.id,
-              })
-            }
-          />
-        </group>
-      ))}
+      {items.map((item) => {
+        const ref = groupRefs.current.get(item.id)!;
+        return (
+          <group
+            key={item.id}
+            ref={ref as React.RefObject<Group>}
+            position={[item.position.x, 0, item.position.z]}
+          >
+            <RackMesh
+              item={item}
+              isSelected={item.id === selectedItemId}
+              onClick={() =>
+                dispatch({
+                  type: 'SELECT_ITEM',
+                  payload: item.id === selectedItemId ? null : item.id,
+                })
+              }
+              onDragStart={handleDragStart(item.id)}
+            />
+          </group>
+        );
+      })}
 
       {/* ---- Camera ---- */}
       <PerspectiveCamera
@@ -101,13 +197,13 @@ function SceneContent() {
 
       {/* ---- Controls ---- */}
       <OrbitControls
+        ref={orbitRef}
         enableRotate={cameraMode === 'free'}
         enableZoom
         enablePan={cameraMode === 'free'}
         minDistance={0.5}
         maxDistance={12}
         target={[0, 0.9, 0]}
-        // In fixed mode lock to a nice preset angle
         minPolarAngle={cameraMode === 'fixed' ? Math.PI / 4 : 0}
         maxPolarAngle={cameraMode === 'fixed' ? Math.PI / 4 : Math.PI / 2}
         minAzimuthAngle={cameraMode === 'fixed' ? -Math.PI / 8 : -Infinity}

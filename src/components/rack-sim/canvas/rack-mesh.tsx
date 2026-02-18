@@ -2,6 +2,7 @@
 
 import { useRef, useMemo } from 'react';
 import { Group } from 'three';
+import type { ThreeEvent } from '@react-three/fiber';
 import type { RackItem } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -301,10 +302,13 @@ interface RackMeshProps {
   item: RackItem;
   isSelected: boolean;
   onClick: () => void;
+  onDragStart: (e: ThreeEvent<PointerEvent>) => void;
+  groupRef?: React.RefObject<Group | null>;
 }
 
-export function RackMesh({ item, isSelected, onClick }: RackMeshProps) {
-  const groupRef = useRef<Group>(null);
+export function RackMesh({ item, isSelected, onClick, onDragStart, groupRef: externalGroupRef }: RackMeshProps) {
+  const internalGroupRef = useRef<Group>(null);
+  const groupRef = externalGroupRef ?? internalGroupRef;
 
   const {
     width: W,   // mm
@@ -373,7 +377,13 @@ export function RackMesh({ item, isSelected, onClick }: RackMeshProps) {
   const rotationY = ((item.rotation ?? 0) * Math.PI) / 180;
 
   return (
-    <group ref={groupRef} rotation={[0, rotationY, 0]} position={[cx, 0, cz]} onClick={(e) => { e.stopPropagation(); onClick(); }}>
+    <group
+      ref={groupRef}
+      rotation={[0, rotationY, 0]}
+      position={[cx, 0, cz]}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onPointerDown={(e) => { e.stopPropagation(); onDragStart(e); }}
+    >
 
       {/* ---- POSTS (4 vertical L-angle irons) ---- */}
       {corners.map(([px, pz], i) => (

@@ -17,6 +17,9 @@ import {
   DEFAULT_INSTALLATION_CHECKLIST,
   type ChecklistItem,
 } from '@/lib/schemas/checklist';
+import {
+  generateOutsourceOrderDocument,
+} from '@/lib/pdf/outsource-order-document';
 
 // 한글 폰트 등록
 registerPDFKoreanFonts();
@@ -71,6 +74,25 @@ export async function GET(request: NextRequest) {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename*=UTF-8''${encodedFilename}`,
+        },
+      });
+    }
+
+    // outsource PDF 생성
+    const outsourceOrderId = searchParams.get('outsourceOrderId');
+    if (type === 'outsource' && outsourceOrderId) {
+      const outsourceResult = await generateOutsourceOrderPDF(supabase, outsourceOrderId);
+
+      if ('error' in outsourceResult) {
+        return NextResponse.json({ error: outsourceResult.error }, { status: 400 });
+      }
+
+      const encodedOutsourceFilename = encodeURIComponent(outsourceResult.filename);
+      return new NextResponse(outsourceResult.buffer as BodyInit, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename*=UTF-8''${encodedOutsourceFilename}`,
         },
       });
     }
@@ -341,6 +363,86 @@ async function generateTestPDF() {
 
   const buffer = await renderToBuffer(TestDocument);
   return buffer;
+}
+
+/**
+ * 외주 발주서 PDF 생성
+ * @param supabase - Supabase client
+ * @param outsourceOrderId - 외주 발주 ID
+ * @returns { buffer, filename } 또는 { error }
+ */
+async function generateOutsourceOrderPDF(
+  supabase: SupabaseClient,
+  outsourceOrderId: string
+): Promise<{ buffer: Buffer; filename: string } | { error: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('outsource_orders')
+      .select(`
+        *,
+        supplier:suppliers(name, phone),
+        order:orders(customer:customers(name, address))
+      `)
+      .eq('id', outsourceOrderId)
+      .single();
+
+    if (error || !data) {
+      console.error('[generateOutsourceOrderPDF] Fetch error:', error, 'id:', outsourceOrderId);
+      return { error: '외주 발주서를 찾을 수 없습니다.' };
+    }
+
+    // supplier join 정규화
+    const rawSupplier = data.supplier;
+    const supplierData = Array.isArray(rawSupplier) ? rawSupplier[0] : rawSupplier;
+    const supplier = supplierData && typeof supplierData === 'object'
+      ? {
+          name: (supplierData as Record<string, unknown>).name as string || '-',
+          phone: (supplierData as Record<string, unknown>).phone as string | null ?? null,
+        }
+      : null;
+
+    // order -> customer join 정규화 (중첩 join)
+    const rawOrder = data.order;
+    const orderData = Array.isArray(rawOrder) ? rawOrder[0] : rawOrder;
+    const rawCustomer = orderData && typeof orderData === 'object'
+      ? (orderData as Record<string, unknown>).customer
+      : null;
+    const customerData = Array.isArray(rawCustomer) ? rawCustomer[0] : rawCustomer;
+
+    if (!customerData || typeof customerData !== 'object') {
+      return { error: '고객 정보를 찾을 수 없습니다.' };
+    }
+
+    const customer = {
+      name: (customerData as Record<string, unknown>).name as string || '(이름 없음)',
+      address: (customerData as Record<string, unknown>).address as string | null ?? null,
+    };
+
+    const document = generateOutsourceOrderDocument({
+      outsourceOrder: {
+        outsource_number: data.outsource_number as string,
+        outsource_type: data.outsource_type as 'system' | 'curtain',
+        spec_summary: data.spec_summary as string | null ?? null,
+        memo: data.memo as string | null ?? null,
+        plan_image_url: data.plan_image_url as string | null ?? null,
+        elevation_image_url: data.elevation_image_url as string | null ?? null,
+        amount: data.amount as number || 0,
+        requested_date: data.requested_date as string | null ?? null,
+        due_date: data.due_date as string | null ?? null,
+      },
+      supplier,
+      customer,
+    });
+
+    const buffer = await renderToBuffer(document);
+    const outsourceNumber = data.outsource_number as string;
+    const filename = `외주발주서_${outsourceNumber}.pdf`;
+
+    return { buffer, filename };
+  } catch (err) {
+    console.error('[generateOutsourceOrderPDF] Unexpected error:', err);
+    return { error: 'PDF 생성 중 오류가 발생했습니다.' };
+  }
 }
 
 /**

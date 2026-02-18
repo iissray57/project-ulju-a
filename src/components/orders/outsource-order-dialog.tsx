@@ -25,6 +25,7 @@ import {
   type OutsourceType,
 } from '@/app/(dashboard)/orders/outsource-actions';
 import { getSuppliers } from '@/app/(dashboard)/suppliers/actions';
+import { OutsourceOrderPDFButton } from '@/components/orders/outsource-order-pdf-button';
 
 const OUTSOURCE_TYPE_LABELS: Record<OutsourceType, string> = {
   system: '시스템장',
@@ -401,8 +402,14 @@ export function OutsourceOrderDialog({
         </div>
 
         <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
-          {/* 왼쪽: 삭제 버튼 (requested 상태에서만) */}
-          <div>
+          {/* 왼쪽: PDF 버튼 + 삭제 버튼 */}
+          <div className="flex gap-2">
+            {isEditMode && outsourceOrder && (
+              <OutsourceOrderPDFButton
+                outsourceOrderId={outsourceOrder.id}
+                outsourceNumber={outsourceOrder.outsource_number}
+              />
+            )}
             {isEditMode && currentStatus === 'requested' && (
               <Button
                 variant="destructive"

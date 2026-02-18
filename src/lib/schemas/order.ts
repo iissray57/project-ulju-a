@@ -30,7 +30,7 @@ export const orderFormSchema = z.object({
   work_spec: workSpecSchema.optional(),
   quotation_amount: z.number().nonnegative(),
   confirmed_amount: z.number().nonnegative(),
-  measurement_date: z.string().min(1, '실측일을 입력하세요'), // 필수
+  measurement_date: z.string().optional(),
   installation_date: z.string().optional(), // 미정 가능
   site_address: z.string().optional(),
   site_memo: z.string().optional(),

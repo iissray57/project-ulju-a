@@ -1,8 +1,24 @@
+'use client';
+
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+import { FloorPlanEditor } from '@/components/floor-plan/floor-plan-editor';
+
+function EditorPage() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('orderId');
+  const modelId = searchParams.get('modelId');
+  return <FloorPlanEditor orderId={orderId} modelId={modelId} />;
+}
+
 export default function NewModelV2Page() {
   return (
-    <div className="flex flex-col items-center justify-center h-[60vh] text-muted-foreground">
-      <p className="text-lg font-medium">2D 에디터</p>
-      <p className="text-sm mt-2">준비 중입니다</p>
-    </div>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-screen">로딩 중...</div>
+      }
+    >
+      <EditorPage />
+    </Suspense>
   );
 }
